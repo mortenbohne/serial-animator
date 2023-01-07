@@ -69,6 +69,7 @@ class TmpViewport(QtWidgets.QWidget):
         )
 
     def capture(self):
+        pm.setFocus(self.model_panel)
         pm.refresh(
             currentView=True,
             filename=self.out_path,
@@ -133,3 +134,28 @@ class GeometryCurveViewGrabber(TmpViewport):
             locators=False,
             motionTrails=False,
         )
+
+
+class AnimationViewGrabber(GeometryViewGrabber):
+    def __init__(self, *args, start_frame=0, end_frame=10, step=1, **kwargs):
+        """Captures a frame-range as a .jpg sequence"""
+        self.start_frame = start_frame
+        self.end_frame = end_frame
+        self.step = step
+        super().__init__(*args, **kwargs)
+
+    def capture(self):
+        frames = range(self.start_frame, self.end_frame, self.step)
+        pm.playblast(
+            filename=self.out_path,
+            frame=frames,
+            compression="jpg",
+            clearCache=True,
+            format="image",
+            offScreen=True,
+            rawFrameNumbers=True,
+            showOrnaments=False,
+            viewer=False,
+        )
+        self.snap_taken.emit(self.out_path)
+        self.close()
