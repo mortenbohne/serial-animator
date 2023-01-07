@@ -1,3 +1,4 @@
+import os
 from PySide2 import QtGui, QtCore
 import serial_animator.animation_io as animation_io
 from serial_animator.ui.utils import get_maya_main_window
@@ -6,7 +7,7 @@ from serial_animator.ui.file_view import (
     FileWidgetHolderBase,
     FilePreviewWidgetBase,
 )
-from serial_animator.ui.view_grabber import GeometryViewGrabber
+from serial_animator.ui.view_grabber import AnimationViewGrabber
 
 import logging
 
@@ -51,7 +52,7 @@ class AnimationWidget(FilePreviewWidgetBase):
             self.frame += 1
         # establish the file name of image file we are looking for in
         # tar-archive
-        image_name = "{0}_{1:04d}.png".format('img', self.frame)
+        image_name = "{0}_{1:04d}.png".format("img", self.frame)
 
         # establish path to image extracted from archive to tmp-dir
         # img_path = os.path.join(self.image_seq_dir, image_name)
@@ -105,8 +106,8 @@ class AnimationWidgetHolder(FileWidgetHolderBase):
 
 class SerialAnimatorView(FileLibraryView):
     """UI for saving and previewing animations in library"""
-
-    ImageGrabber = GeometryViewGrabber
+    FileType = "anim"
+    ImageGrabber = AnimationViewGrabber
     DataHolderWidget = AnimationWidgetHolder
 
     def __init__(self, parent=None):
@@ -115,6 +116,17 @@ class SerialAnimatorView(FileLibraryView):
         self.save_line_edit.setPlaceholderText("Animation Name")
         self.load_grp.setTitle("Load Animation")
         self.setWindowTitle("Animation Library")
+
+    def grab_preview(self, out_dir):
+        img_path = os.path.join(out_dir, "preview")
+        grabber_window = self.ImageGrabber(img_path)
+        return grabber_window
+
+    def save_data(self, img_path):
+        out_path = self.get_out_path()
+        _logger.debug(f"{out_path=}")
+        preview_dir = os.path.dirname(img_path)
+        animation_io.save_animation_from_selection(out_path, preview_dir)
 
 
 __VIEW = None
