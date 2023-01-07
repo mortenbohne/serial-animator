@@ -145,6 +145,7 @@ class AnimationViewGrabber(GeometryViewGrabber):
         super().__init__(*args, **kwargs)
 
     def capture(self):
+        pm.setFocus(self.model_panel)
         frames = range(self.start_frame, self.end_frame, self.step)
         pm.playblast(
             filename=self.out_path,
