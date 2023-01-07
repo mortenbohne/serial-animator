@@ -49,3 +49,13 @@ def write_json_data(data, path, encoder=json.JSONEncoder):
     with open(path, "w") as f:
         json.dump(data, fp=f, indent=4, cls=encoder)
     _logger.debug("Wrote data to file: {}".format(path))
+
+
+def write_pynode_data_to_json(data, path):
+    clean_data = dict()
+    for k, v in data.items():
+        try:
+            clean_data[k.fullPath()] = v
+        except AttributeError:
+            clean_data[k.name()] = v
+    write_json_data(clean_data, path)

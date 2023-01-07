@@ -6,9 +6,8 @@ from serial_animator.exceptions import SerialAnimatorError
 from serial_animator.file_io import (
     archive_files,
     read_data_from_archive,
-    write_json_data,
+    write_pynode_data_to_json,
 )
-import serial_animator.scene_paths as scene_paths
 import serial_animator.find_nodes as find_nodes
 
 import logging
@@ -67,7 +66,7 @@ def save_pose_from_selection(path, img_path):
     tmp_dir = tempfile.mkdtemp()
     try:
         pose_path = os.path.join(tmp_dir, "pose.json")
-        write_data_to_json(data, pose_path)
+        write_pynode_data_to_json(data, pose_path)
         archive = archive_files(files=[pose_path, img_path], out_path=path)
     finally:
         shutil.rmtree(tmp_dir)
@@ -158,8 +157,5 @@ def refresh_viewport():
     pm.refresh()
 
 
-def write_data_to_json(data, path):
-    clean_data = dict()
-    for k, v in data.items():
-        clean_data[k.fullPath()] = v
-    write_json_data(clean_data, path)
+def get_pose_filetype():
+    return "pose"
