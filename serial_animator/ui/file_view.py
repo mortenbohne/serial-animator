@@ -10,6 +10,7 @@ from PySide2 import QtWidgets, QtCore, QtGui
 
 from serial_animator.utils import get_user_preference_dir, setup_scene_opened_callback
 import serial_animator.file_io
+import serial_animator.scene_paths as scene_paths
 from serial_animator.ui.widgets import MayaWidget, ScrollFlowWidget
 from serial_animator.ui.view_grabber import TmpViewport
 
@@ -270,7 +271,15 @@ class FileLibraryView(MayaWidget):
 
     @staticmethod
     def get_asset_locations():
-        raise NotImplementedError
+        """Gets location of assets displayed in tabs"""
+        locations = list()
+
+        locations.append(scene_paths.get_shared_lib_path())
+        locations.append(scene_paths.get_user_lib_path())
+        scene_path = scene_paths.get_current_scene_lib_path()
+        if scene_path:
+            locations.append(scene_path)
+        return locations
 
     def dockCloseEventTriggered(self):
         self._close()

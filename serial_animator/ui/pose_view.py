@@ -85,18 +85,6 @@ class PoseLibraryView(FileLibraryView):
         self.load_grp.setTitle("Load Pose")
         self.setWindowTitle("Pose Library")
 
-    @staticmethod
-    def get_asset_locations():
-        """Gets location of assets displayed in tabs"""
-        locations = list()
-
-        locations.append(pose_io.get_shared_pose_path())
-        locations.append(pose_io.get_user_pose_path())
-        character_path = pose_io.get_scene_pose_path()
-        if character_path:
-            locations.append(character_path)
-        return locations
-
     def save_clicked(self):
         if not self.save_line_edit.text():
             _logger.warning("Please name the pose before saving")

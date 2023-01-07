@@ -41,23 +41,6 @@ class SerialAnimatorNoNodesSelectedForLoadError(SerialAnimatorNoNodesSelectedErr
         super(SerialAnimatorNoNodesSelectedForLoadError, self).__init__(message)
 
 
-def get_scene_pose_path():
-    """Gets the path to the currently open character-scene if any"""
-    character_path = scene_paths.get_current_scene_pose_path()
-    if character_path:
-        return os.path.join(character_path, "Animations")
-
-
-def get_shared_pose_path():
-    """Gets the path to commonly shared poses"""
-    return scene_paths.get_shared_poses_path()
-
-
-def get_user_pose_path():
-    """Gets the path to user's animation-folder"""
-    return scene_paths.get_user_pose_path()
-
-
 def get_nodes():
     """Gets selected nodes. If no nodes are selected, get all scene nodes"""
     return pm.selected() or pm.ls()
