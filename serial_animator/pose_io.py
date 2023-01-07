@@ -1,5 +1,4 @@
 import os
-import shutil
 import tempfile
 import pymel.core as pm
 from serial_animator.exceptions import SerialAnimatorError
@@ -63,13 +62,10 @@ def save_pose_from_selection(path, img_path):
     with it
     """
     data = get_data_from_nodes()
-    tmp_dir = tempfile.mkdtemp()
-    try:
+    with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
         pose_path = os.path.join(tmp_dir, "pose.json")
         write_pynode_data_to_json(data, pose_path)
         archive = archive_files(files=[pose_path, img_path], out_path=path)
-    finally:
-        shutil.rmtree(tmp_dir)
     return archive
 
 

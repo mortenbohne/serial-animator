@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import tempfile
-import shutil
 import logging
 import uuid
 
@@ -69,16 +68,16 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
         """
         Extracts the start-image from archive, and sets it as pix-map
         """
-        tmp_dir = tempfile.mkdtemp()
-        try:
+        with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
             img_path = self.get_preview_image_path(self.path, tmp_dir)
-            pix = QtGui.QPixmap()
-            if os.path.isfile(img_path):
-                pix.load(img_path)
-                pix = pix.scaled(250, 250, QtCore.Qt.KeepAspectRatio)
-            self.setPixmap(pix)
-        finally:
-            shutil.rmtree(tmp_dir)
+            self.set_image(img_path)
+
+    def set_image(self, img_path):
+        pix = QtGui.QPixmap()
+        if os.path.isfile(img_path):
+            pix.load(img_path)
+            pix = pix.scaled(250, 250, QtCore.Qt.KeepAspectRatio)
+        self.setPixmap(pix)
 
     @staticmethod
     def get_preview_image_path(path, directory):
@@ -308,12 +307,9 @@ class FileLibraryView(MayaWidget):
         Opens capture-viewport and connects it's snap-taken signal to
         save_data
         """
-        tmp_dir = tempfile.mkdtemp()
-        try:
+        with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
             grabber_window = self.grab_preview(tmp_dir)
             grabber_window.snap_taken.connect(self.save_data)
-        finally:
-            shutil.rmtree(tmp_dir)
 
     def grab_preview(self, out_dir):
         img_path = os.path.join(out_dir, "preview.jpg")

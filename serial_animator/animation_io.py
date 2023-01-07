@@ -7,6 +7,7 @@ from serial_animator.file_io import (
     write_json_data,
     archive_files,
     write_pynode_data_to_json,
+    read_data_from_archive
 )
 import serial_animator.scene_paths as scene_paths
 
@@ -34,20 +35,19 @@ def save_animation_from_selection(path, preview_dir_path):
     frame_range = get_frame_range()
     anim_data = get_anim_data(nodes=nodes, frame_range=frame_range)
     meta_data = get_meta_data(nodes=nodes, frame_range=frame_range)
-    tmp_dir = tempfile.mkdtemp()
-    meta_path = os.path.join(tmp_dir, "anim_data.json")
-    inner_path = os.path.join(tmp_dir, "data")
-    os.makedirs(inner_path)
-    anim_data_path = os.path.join(inner_path, "anim_data.json")
-    images = os.listdir(preview_dir_path)
-    data_tar_path = os.path.join(inner_path, "data.tar")
-    _logger.debug(images[0])
-    preview_image = os.path.join(tmp_dir, "preview.jpg")
-    _logger.debug(preview_image)
-    shutil.copy(
-        os.path.join(preview_dir_path, get_preview_image(images)), preview_image
-    )
-    try:
+    with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
+        meta_path = os.path.join(tmp_dir, "meta_data.json")
+        inner_path = os.path.join(tmp_dir, "data")
+        os.makedirs(inner_path)
+        anim_data_path = os.path.join(inner_path, "anim_data.json")
+        images = os.listdir(preview_dir_path)
+        data_tar_path = os.path.join(inner_path, "data.tar")
+        _logger.debug(images[0])
+        preview_image = os.path.join(tmp_dir, "preview.jpg")
+        _logger.debug(preview_image)
+        shutil.copy(
+            os.path.join(preview_dir_path, get_preview_image(images)), preview_image
+        )
         write_pynode_data_to_json(anim_data, anim_data_path)
         inner_archive = archive_files(
             files=[anim_data_path, *images], out_path=data_tar_path
@@ -56,8 +56,7 @@ def save_animation_from_selection(path, preview_dir_path):
         archive = archive_files(
             files=[preview_image, meta_path, inner_archive], out_path=path
         )
-    finally:
-        shutil.rmtree(tmp_dir)
+
     return archive
 
 
@@ -112,3 +111,7 @@ def get_anim_data(nodes=None, frame_range=None):
     for node in nodes:
         data[node] = dict()
     return data
+
+
+def extract_meta_data(archive):
+    return read_data_from_archive(archive, json_name="meta_data.json")
