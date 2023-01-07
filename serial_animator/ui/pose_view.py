@@ -1,6 +1,4 @@
-import os
 from PySide2 import QtCore, QtGui
-import logging
 
 from serial_animator.utils import Undo
 import serial_animator.pose_io as pose_io
@@ -11,6 +9,8 @@ from serial_animator.ui.file_view import (
     FileWidgetHolderBase,
 )
 from serial_animator.ui.view_grabber import GeometryViewGrabber
+
+import logging
 
 _logger = logging.getLogger(__name__)
 
@@ -42,7 +42,6 @@ class PoseWidget(FilePreviewWidgetBase):
 
     def mouseReleaseEvent(self, ev: QtGui.QMouseEvent) -> None:
         pose_io.end_undo()
-        self.node_dict = None
         super(PoseWidget, self).mouseReleaseEvent(ev)
 
     def mouseDoubleClickEvent(self, event):
@@ -65,7 +64,7 @@ class PoseWidget(FilePreviewWidgetBase):
 
 
 class PoseWidgetHolder(FileWidgetHolderBase):
-    FileType = "pose"
+    FileType = pose_io.get_pose_filetype()
     DataWidgetClass = PoseWidget
 
     def __init__(self, path):
@@ -74,7 +73,7 @@ class PoseWidgetHolder(FileWidgetHolderBase):
 
 class PoseLibraryView(FileLibraryView):
     """UI for editing poses"""
-
+    FileType = pose_io.get_pose_filetype()
     ImageGrabber = GeometryViewGrabber
     DataHolderWidget = PoseWidgetHolder
 
@@ -95,9 +94,7 @@ class PoseLibraryView(FileLibraryView):
         super(PoseLibraryView, self).save_clicked()
 
     def save_data(self, img_path):
-        file_name = "{}.pose".format(self.save_line_edit.text())
-        current_tab_path = self.tab_widget.currentWidget().path
-        out_path = os.path.join(current_tab_path, file_name)
+        out_path = self.get_out_path()
         pose_io.save_pose_from_selection(out_path, img_path)
         self.tab_widget.currentWidget().update_widget_from_path(out_path)
         _logger.debug(img_path)

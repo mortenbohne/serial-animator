@@ -222,6 +222,7 @@ class TabWidget(QtWidgets.QTabWidget):
 class FileLibraryView(MayaWidget):
     """Base UI for saving, loading and editing data archived with a preview image"""
 
+    FileType = "tar"
     ImageGrabber = TmpViewport
     DataHolderWidget = FileWidgetHolderBase
 
@@ -309,14 +310,23 @@ class FileLibraryView(MayaWidget):
         """
         tmp_dir = tempfile.mkdtemp()
         try:
-            img_path = os.path.join(tmp_dir, "preview.jpg")
-            grabber_window = self.ImageGrabber(img_path)
+            grabber_window = self.grab_preview(tmp_dir)
             grabber_window.snap_taken.connect(self.save_data)
         finally:
             shutil.rmtree(tmp_dir)
 
+    def grab_preview(self, out_dir):
+        img_path = os.path.join(out_dir, "preview.jpg")
+        grabber_window = self.ImageGrabber(img_path)
+        return grabber_window
+
     def save_data(self, img_path):
         raise NotImplementedError
+
+    def get_out_path(self):
+        file_name = f"{self.save_line_edit.text()}.{self.FileType}"
+        current_tab_path = self.tab_widget.currentWidget().path
+        return os.path.join(current_tab_path, file_name)
 
     @classmethod
     def get_ui_settings_path(cls):
