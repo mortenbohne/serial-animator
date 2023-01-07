@@ -44,7 +44,9 @@ def save_animation_from_selection(path, preview_dir_path):
     _logger.debug(images[0])
     preview_image = os.path.join(tmp_dir, "preview.jpg")
     _logger.debug(preview_image)
-    shutil.copy(os.path.join(preview_dir_path, images[0]), preview_image)
+    shutil.copy(
+        os.path.join(preview_dir_path, get_preview_image(images)), preview_image
+    )
     try:
         write_pynode_data_to_json(anim_data, anim_data_path)
         inner_archive = archive_files(
@@ -59,12 +61,32 @@ def save_animation_from_selection(path, preview_dir_path):
     return archive
 
 
+def get_preview_image(images):
+    """Get the image in an image_sequence closest to current time"""
+    current_time = int(pm.currentTime())
+
+    def get_difference(img):
+        return abs(int(img.split(".")[1]) - current_time)
+
+    return sorted(images, key=get_difference)[0]
+
+
 def get_frame_range():
-    return [0, 100]
+    """
+    Gets the selected frame_range from time-slider. If nothing is
+    selected, get playback range
+    """
+    time_slider = pm.language.MelGlobals.get("gPlayBackSlider")
+    if pm.windows.timeControl(time_slider, q=True, rangeVisible=True):
+        start, end = pm.windows.timeControl(time_slider, q=True, rangeArray=True)
+    else:
+        start = pm.animation.playbackOptions(q=True, min=True)
+        end = pm.animation.playbackOptions(q=True, max=True)
+    return int(start), int(end)
 
 
-def get_framerate():
-    return 25
+def get_time_unit():
+    return pm.general.currentUnit(q=True, time=True)
 
 
 def get_meta_data(nodes=None, frame_range=None):
@@ -79,7 +101,7 @@ def get_meta_data(nodes=None, frame_range=None):
             node_names.append(node.name())
     data["nodes"] = node_names
     data["frame_range"] = frame_range
-    data["framerate"] = get_framerate()
+    data["time_unit"] = get_time_unit()
     return data
 
 
