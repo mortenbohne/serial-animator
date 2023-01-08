@@ -14,6 +14,7 @@ from serial_animator.ui.widgets import MayaWidget, ScrollFlowWidget
 from serial_animator.ui.view_grabber import TmpViewport
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
 
 
 class FilePreviewWidgetBase(QtWidgets.QLabel):

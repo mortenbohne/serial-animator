@@ -1,9 +1,9 @@
 import os
+import tarfile
 import tempfile
 
-from PySide2 import QtGui, QtCore
+from PySide2 import QtCore
 import serial_animator.animation_io as animation_io
-import serial_animator.file_io as file_io
 from serial_animator.ui.utils import get_maya_main_window
 from serial_animator.ui.file_view import (
     FileLibraryView,
@@ -59,7 +59,6 @@ class AnimationWidget(FilePreviewWidgetBase):
         image_name = f"preview.{self.frame:04d}.jpg"
         self.set_temp_image(image_name)
 
-
     def start_anim(self):
         """
         Starts animation-timer with correct frame-rate
@@ -89,10 +88,17 @@ class AnimationWidget(FilePreviewWidgetBase):
         self.set_start_image()
 
     def set_temp_image(self, preview_image_name):
-        with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
-            file_io.extract_file_from_archive(self.path, tmp_dir, preview_image_name)
-            img_path = self.get_preview_image_path(tmp_dir, preview_image_name)
-            self.set_image(img_path)
+        try:
+            with tarfile.open(self.path) as tf:
+                img_file = tf.extractfile(preview_image_name)
+                with tempfile.NamedTemporaryFile(
+                        prefix="Serial_animator", suffix=".png", delete=False) as img:
+                    img.write(img_file.read())
+                    tmp_file_name = img.name
+                self.set_image(tmp_file_name)
+            os.remove(tmp_file_name)
+        except KeyError:
+            pass
 
     def mouseDoubleClickEvent(self, event):
         self.load_animation()
