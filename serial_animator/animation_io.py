@@ -1,19 +1,18 @@
 import os
 import shutil
-import tempfile
 
 import pymel.core as pm
 from serial_animator.file_io import (
     write_json_data,
     archive_files,
     write_pynode_data_to_json,
-    read_data_from_archive
+    read_data_from_archive,
 )
-import serial_animator.scene_paths as scene_paths
 
 import logging
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
 
 
 def load_animation(path, nodes=None):
@@ -35,27 +34,24 @@ def save_animation_from_selection(path, preview_dir_path):
     frame_range = get_frame_range()
     anim_data = get_anim_data(nodes=nodes, frame_range=frame_range)
     meta_data = get_meta_data(nodes=nodes, frame_range=frame_range)
-    with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
-        meta_path = os.path.join(tmp_dir, "meta_data.json")
-        inner_path = os.path.join(tmp_dir, "data")
-        os.makedirs(inner_path)
-        anim_data_path = os.path.join(inner_path, "anim_data.json")
-        images = os.listdir(preview_dir_path)
-        data_tar_path = os.path.join(inner_path, "data.tar")
-        _logger.debug(images[0])
-        preview_image = os.path.join(tmp_dir, "preview.jpg")
-        _logger.debug(preview_image)
-        shutil.copy(
-            os.path.join(preview_dir_path, get_preview_image(images)), preview_image
-        )
-        write_pynode_data_to_json(anim_data, anim_data_path)
-        inner_archive = archive_files(
-            files=[anim_data_path, *images], out_path=data_tar_path
-        )
-        write_json_data(meta_data, meta_path)
-        archive = archive_files(
-            files=[preview_image, meta_path, inner_archive], out_path=path
-        )
+
+    meta_path = os.path.join(preview_dir_path, "meta_data.json")
+    anim_data_path = os.path.join(preview_dir_path, "anim_data.json")
+    images = [
+        os.path.join(preview_dir_path, img) for img in os.listdir(preview_dir_path)
+    ]
+    _logger.debug(f"first image: {images}")
+    preview_image = os.path.join(preview_dir_path, "preview.jpg")
+    shutil.copy(
+        os.path.join(preview_dir_path, get_preview_image(images)), preview_image
+    )
+    write_pynode_data_to_json(anim_data, anim_data_path)
+    write_json_data(meta_data, meta_path)
+    files = [preview_image, meta_path, anim_data_path, *images]
+    _logger.debug(f"files: {files}")
+    archive = archive_files(
+        files=[preview_image, meta_path, anim_data_path, *images], out_path=path
+    )
 
     return archive
 
@@ -85,7 +81,7 @@ def get_frame_range():
 
 
 def get_time_unit():
-    return pm.general.currentUnit(q=True, time=True)
+    return pm.mel.eval("currentTimeUnitToFPS")
 
 
 def get_meta_data(nodes=None, frame_range=None):

@@ -1,6 +1,9 @@
 import os
+import tempfile
+
 from PySide2 import QtGui, QtCore
 import serial_animator.animation_io as animation_io
+import serial_animator.file_io as file_io
 from serial_animator.ui.utils import get_maya_main_window
 from serial_animator.ui.file_view import (
     FileLibraryView,
@@ -21,24 +24,25 @@ class AnimationWidget(FilePreviewWidgetBase):
     def __init__(self, path):
         super(AnimationWidget, self).__init__(path)
         self.setMouseTracking(True)
-
+        self.meta_data = animation_io.extract_meta_data(self.path)
+        _logger.debug(f"{self.meta_data=}")
         self.frame_rate = self.get_framerate()
         self.start_frame = self.get_start_frame()
         self.frame = self.start_frame
         self.end_frame = self.get_end_frame()
-        self._anim_timer = QtCore.QTimer()
+        self._anim_timer = QtCore.QTimer(self)
         self._anim_timer.timeout.connect(self.change_image)
         self._hover = False
         self.start_img = None
 
     def get_start_frame(self):
-        return 0
+        return int(self.meta_data.get("frame_range")[0])
 
     def get_end_frame(self):
-        return 60
+        return int(self.meta_data.get("frame_range")[1])
 
     def get_framerate(self):
-        return 30
+        return self.meta_data.get("time_unit")
 
     def change_image(self):
         # set preview-image if we are not hovering
@@ -52,11 +56,9 @@ class AnimationWidget(FilePreviewWidgetBase):
             self.frame += 1
         # establish the file name of image file we are looking for in
         # tar-archive
-        image_name = "{0}_{1:04d}.png".format("img", self.frame)
+        image_name = f"preview.{self.frame:04d}.jpg"
+        self.set_temp_image(image_name)
 
-        # establish path to image extracted from archive to tmp-dir
-        # img_path = os.path.join(self.image_seq_dir, image_name)
-        _logger.debug(image_name)
 
     def start_anim(self):
         """
@@ -85,6 +87,12 @@ class AnimationWidget(FilePreviewWidgetBase):
         self._hover = False
         self._anim_timer.stop()
         self.set_start_image()
+
+    def set_temp_image(self, preview_image_name):
+        with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
+            file_io.extract_file_from_archive(self.path, tmp_dir, preview_image_name)
+            img_path = self.get_preview_image_path(tmp_dir, preview_image_name)
+            self.set_image(img_path)
 
     def mouseDoubleClickEvent(self, event):
         self.load_animation()
@@ -119,7 +127,8 @@ class SerialAnimatorView(FileLibraryView):
 
     def grab_preview(self, out_dir):
         img_path = os.path.join(out_dir, "preview")
-        grabber_window = self.ImageGrabber(img_path)
+        start, end = animation_io.get_frame_range()
+        grabber_window = self.ImageGrabber(img_path, start_frame=start, end_frame=end)
         return grabber_window
 
     def save_data(self, img_path):
