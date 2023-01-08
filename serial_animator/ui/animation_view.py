@@ -1,3 +1,4 @@
+"""Widgets for saving, loading and editing animation files"""
 import os
 import tarfile
 import tempfile
@@ -23,7 +24,6 @@ class AnimationWidget(FilePreviewWidgetBase):
 
     def __init__(self, path):
         super(AnimationWidget, self).__init__(path)
-        self.setMouseTracking(True)
         self.meta_data = animation_io.extract_meta_data(self.path)
         _logger.debug(f"{self.meta_data=}")
         self.frame_rate = self.get_framerate()
@@ -45,11 +45,16 @@ class AnimationWidget(FilePreviewWidgetBase):
         return self.meta_data.get("time_unit")
 
     def change_image(self):
+        """
+        If mouse is not over widget, set start-image. If the mouse is
+        over, loop animation by setting tmp image based on current frame
+        """
         # set preview-image if we are not hovering
         if self._hover is False:
             self.set_start_image()
             return
-        # reset animation if we are at the last frame, else move to next frame
+        # reset animation if we are at the last frame, else move to next
+        # frame
         if self.frame >= self.end_frame:
             self.frame = self.start_frame
         else:
@@ -62,7 +67,6 @@ class AnimationWidget(FilePreviewWidgetBase):
     def start_anim(self):
         """
         Starts animation-timer with correct frame-rate
-        :return:
         """
         if self._anim_timer.isActive():
             return
@@ -72,22 +76,23 @@ class AnimationWidget(FilePreviewWidgetBase):
     def enterEvent(self, event):
         """
         Opens archive, sets hover and starts animation of image-sequence
-        :param event:
-        :return:
         """
         self._hover = True
         self.start_anim()
 
     def leaveEvent(self, event):
         """
-        Stops animation of image-sequence, and sets start-image if it exists
-        :param event:
+        Stops animation of image-sequence, and sets start-image
         """
         self._hover = False
         self._anim_timer.stop()
         self.set_start_image()
 
     def set_temp_image(self, preview_image_name):
+        """
+        Opens archive and tries to extract preview_image_name to a
+        temporary location and sets it as widget image. Deletes tmp-file
+        """
         try:
             with tarfile.open(self.path) as tf:
                 img_file = tf.extractfile(preview_image_name)
@@ -96,6 +101,8 @@ class AnimationWidget(FilePreviewWidgetBase):
                     img.write(img_file.read())
                     tmp_file_name = img.name
                 self.set_image(tmp_file_name)
+            # couldn't get it to work with a temp-file that deletes
+            # itself, so manually doing it here
             os.remove(tmp_file_name)
         except KeyError:
             pass
@@ -109,7 +116,10 @@ class AnimationWidget(FilePreviewWidgetBase):
 
 
 class AnimationWidgetHolder(FileWidgetHolderBase):
-    """Displays Animations-files in a folder"""
+    """
+    Displays Animations-files in a folder. This is the widget holding
+    multiple widgets representing files
+    """
 
     FileType = "anim"
     DataWidgetClass = AnimationWidget
@@ -119,7 +129,9 @@ class AnimationWidgetHolder(FileWidgetHolderBase):
 
 
 class SerialAnimatorView(FileLibraryView):
-    """UI for saving and previewing animations in library"""
+    """
+    Main UI for saving loading and previewing animations in library
+    """
     FileType = "anim"
     ImageGrabber = AnimationViewGrabber
     DataHolderWidget = AnimationWidgetHolder
@@ -132,6 +144,7 @@ class SerialAnimatorView(FileLibraryView):
         self.setWindowTitle("Animation Library")
 
     def grab_preview(self, out_dir):
+        """Opens a preview viewport and grabs image-sequence from it"""
         img_path = os.path.join(out_dir, "preview")
         start, end = animation_io.get_frame_range()
         grabber_window = self.ImageGrabber(img_path, start_frame=start, end_frame=end)
