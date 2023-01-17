@@ -39,12 +39,14 @@ class SerialAnimatorNoNodesSelectedForLoadError(SerialAnimatorNoNodesSelectedErr
         super(SerialAnimatorNoNodesSelectedForLoadError, self).__init__(message)
 
 
-def get_nodes():
-    """Gets selected nodes. If no nodes are selected, get all scene nodes"""
+def get_nodes() -> list:
+    """
+    Gets selected nodes. If no nodes are selected, get all scene nodes
+    """
     return pm.selected() or pm.ls()
 
 
-def get_data_from_nodes(nodes=None):
+def get_data_from_nodes(nodes=None) -> dict:
     """
     Gets keyable data from nodes and returns them as a node-dict with
     a dict of attribute-names and values
@@ -56,7 +58,7 @@ def get_data_from_nodes(nodes=None):
     return data
 
 
-def save_pose_from_selection(path, img_path):
+def save_pose_from_selection(path, img_path) -> str:
     """
     Saves data for selected nodes to path and archives preview-image
     with it
@@ -69,21 +71,21 @@ def save_pose_from_selection(path, img_path):
     return archive
 
 
-def get_keyable_data(node):
+def get_keyable_data(node) -> dict:
     data = dict()
     for a in [a for a in node.listAttr() if a.isKeyable()]:
         data[a.attrName()] = a.get()
     return data
 
 
-def get_node_name_dict(nodes, long_name=True):
+def get_node_name_dict(nodes, long_name=True) -> dict:
     if long_name:
         return {node.longName(): node for node in nodes}
     else:
         return {node.stripNamespace(): node for node in nodes}
 
 
-def get_interpolation_dict(data):
+def get_interpolation_dict(data) -> dict:
     nodes = get_nodes()
     return find_nodes.search_nodes(data.keys(), nodes)
 
@@ -117,13 +119,13 @@ def interpolate(target: dict, origin: dict, weight: int):
                 node.attr(attribute_name).set(value)
 
 
-def read_pose_data(path):
+def read_pose_data(path) -> dict:
     data = read_data_from_archive(path, json_name="pose.json")
     _logger.debug(data)
     return data
 
 
-def read_pose_data_to_nodes(path, nodes=None):
+def read_pose_data_to_nodes(path, nodes=None) -> dict:
     data = read_pose_data(path)
     node_dict = find_nodes.search_nodes(data.keys(), nodes)
     pose = dict()
@@ -153,5 +155,5 @@ def refresh_viewport():
     pm.refresh()
 
 
-def get_pose_filetype():
+def get_pose_filetype() -> str:
     return "pose"

@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Generator, List
 import subprocess
 import tempfile
 import logging
@@ -81,7 +82,7 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
         self.setPixmap(pix)
 
     @staticmethod
-    def get_preview_image_path(path, directory):
+    def get_preview_image_path(path, directory) -> str:
         return serial_animator.file_io.extract_file_from_archive(path, directory)
 
 
@@ -108,7 +109,7 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
         self.update_content()
         self.setToolTip(self.path)
 
-    def get_files(self):
+    def get_files(self) -> Generator[str, None, None]:
         for f in os.listdir(self.path):
             if f.endswith(f".{self.FileType}"):
                 yield os.path.normpath(os.path.join(self.path, f))
@@ -124,7 +125,7 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
             self.data_widget_layout.addWidget(self.path_label)
             self.data_widgets.append(self.path_label)
 
-    def create_data_widget(self, path):
+    def create_data_widget(self, path) -> FilePreviewWidgetBase:
         return self.DataWidgetClass(path)
 
     def clear_widgets(self):
@@ -192,7 +193,7 @@ class TabWidget(QtWidgets.QTabWidget):
     def save_current_tab_to_settings(self):
         self.ui_settings.setValue("tab_index", self.currentIndex())
 
-    def add_tab(self, path):
+    def add_tab(self, path) -> FileWidgetHolderBase:
         return self.DataHolderWidget(path=path)
 
     def dir_changed(self, path):
@@ -210,7 +211,7 @@ class TabWidget(QtWidgets.QTabWidget):
         self.add_tabs()
 
     @classmethod
-    def get_ui_settings_path(cls):
+    def get_ui_settings_path(cls) -> str:
         """Gets path for ui settings-file"""
         name = cls.__name__
         return os.path.join(get_user_preference_dir(), f"SerialAnimator_{name}.ini")
@@ -271,7 +272,7 @@ class FileLibraryView(MayaWidget):
         self.restoreGeometry(self.ui_settings.value("geometry"))
 
     @staticmethod
-    def get_asset_locations():
+    def get_asset_locations() -> List[str]:
         """Gets location of assets displayed in tabs"""
         locations = list()
 
@@ -312,7 +313,7 @@ class FileLibraryView(MayaWidget):
             grabber_window = self.grab_preview(tmp_dir)
             grabber_window.snap_taken.connect(self.save_data)
 
-    def grab_preview(self, out_dir):
+    def grab_preview(self, out_dir) -> TmpViewport:
         img_path = os.path.join(out_dir, "preview.jpg")
         grabber_window = self.ImageGrabber(img_path)
         return grabber_window
@@ -320,13 +321,13 @@ class FileLibraryView(MayaWidget):
     def save_data(self, img_path):
         raise NotImplementedError
 
-    def get_out_path(self):
+    def get_out_path(self) -> str:
         file_name = f"{self.save_line_edit.text()}.{self.FileType}"
         current_tab_path = self.tab_widget.currentWidget().path
         return os.path.join(current_tab_path, file_name)
 
     @classmethod
-    def get_ui_settings_path(cls):
+    def get_ui_settings_path(cls) -> str:
         """Gets path for ui settings-file"""
         return os.path.join(
             get_user_preference_dir(), f"SerialAnimator_{cls.__name__}.ini"

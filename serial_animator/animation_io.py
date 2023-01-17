@@ -1,5 +1,6 @@
 import os
 import shutil
+from typing import List
 
 import pymel.core as pm
 from serial_animator.file_io import (
@@ -19,13 +20,15 @@ def load_animation(path, nodes=None):
     _logger.debug(f"Applying animation from {path} to {nodes}")
 
 
-def get_nodes():
-    """Gets selected nodes. If no nodes are selected, get all scene nodes"""
+def get_nodes() -> [pm.PyNode]:
+    """
+    Gets selected nodes. If no nodes are selected, get all scene nodes
+    """
     nodes = pm.selected() or pm.ls()
     return [node for node in nodes if pm.keyframe(node, q=True, keyframeCount=True) > 0]
 
 
-def save_animation_from_selection(path, preview_dir_path):
+def save_animation_from_selection(path, preview_dir_path) -> str:
     """
     Saves data for selected nodes to path and archives preview-image
     with it
@@ -56,7 +59,7 @@ def save_animation_from_selection(path, preview_dir_path):
     return archive
 
 
-def get_preview_image(images):
+def get_preview_image(images) -> str:
     """Get the image in an image_sequence closest to current time"""
     current_time = int(pm.currentTime())
 
@@ -66,7 +69,7 @@ def get_preview_image(images):
     return sorted(images, key=get_difference)[0]
 
 
-def get_frame_range():
+def get_frame_range() -> [int, int]:
     """
     Gets the selected frame_range from time-slider. If nothing is
     selected, get playback range
@@ -80,11 +83,11 @@ def get_frame_range():
     return int(start), int(end)
 
 
-def get_time_unit():
+def get_time_unit() -> float:
     return pm.mel.eval("currentTimeUnitToFPS")
 
 
-def get_meta_data(nodes=None, frame_range=None):
+def get_meta_data(nodes=None, frame_range=None) -> dict:
     nodes = nodes or get_nodes()
     frame_range = frame_range or get_frame_range()
     data = dict()
@@ -100,7 +103,7 @@ def get_meta_data(nodes=None, frame_range=None):
     return data
 
 
-def get_anim_data(nodes=None, frame_range=None):
+def get_anim_data(nodes=None, frame_range=None) -> dict:
     nodes = nodes or get_nodes()
     frame_range = frame_range or get_frame_range()
     data = dict()
@@ -109,5 +112,5 @@ def get_anim_data(nodes=None, frame_range=None):
     return data
 
 
-def extract_meta_data(archive):
+def extract_meta_data(archive) -> dict:
     return read_data_from_archive(archive, json_name="meta_data.json")

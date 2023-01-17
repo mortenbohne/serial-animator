@@ -1,4 +1,5 @@
 """Utilities to find nodes from path-name but in different namespaces"""
+from typing import Generator, Optional
 import logging
 import pymel.core as pm
 
@@ -10,7 +11,8 @@ _logger = logging.getLogger(__name__)
 
 def search_nodes(node_paths, target_nodes) -> dict:
     """
-    finds relevant nodes in target-dict based on full path defined in node_paths
+    finds relevant nodes in target-dict based on full path defined in
+    node_paths.
     Returns a dict with node_path: target_node
     """
     target_dict = get_node_path_dict(target_nodes)
@@ -40,9 +42,10 @@ def search_nodes(node_paths, target_nodes) -> dict:
     return node_dict
 
 
-def strip_namespaces_gen(name):
+def strip_namespaces_gen(name) -> Generator[str, None, None]:
     """
-    Generator to strip namespaces from node path name. returns namespace-name and node-path
+    Generator to strip namespaces from node path name.
+    Returns namespace-name and node-path
     """
     tokens = name.split("|")
     if len(tokens) == 1:
@@ -57,7 +60,7 @@ def strip_namespaces_gen(name):
     yield "", name.replace(full_ns, "")
 
 
-def strip_all_namespaces(name):
+def strip_all_namespaces(name) -> Optional[str]:
     """Strips all namespaces from node-path"""
     tokens = name.split("|")
     if len(tokens) == 1:
@@ -67,7 +70,7 @@ def strip_all_namespaces(name):
     return name.replace(namespaces, "")
 
 
-def get_node_path_dict(nodes):
+def get_node_path_dict(nodes) -> dict:
     path_dict = dict()
     for node in nodes:
         try:

@@ -29,12 +29,14 @@ class ContextDecorator(object):
         return wrapper
 
 
-def get_user_preference_dir():
+def get_user_preference_dir() -> str:
     return pm.internalVar(userPrefDir=True)
 
 
-def setup_scene_opened_callback(function, parent=None):
-    """Sets up a callback when new scene is opened"""
+def setup_scene_opened_callback(function, parent=None) -> int:
+    """
+    Sets up a callback when new scene is opened and returns scriptJob-id
+    """
     if parent:
         return pm.scriptJob(parent=parent, event=["SceneOpened", function])
     else:

@@ -44,8 +44,8 @@ class ScrollContainer(QtWidgets.QWidget):
         self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFocusPolicy(QtGui.Qt.NoFocus)
-        # self.scroll_area.setHorizontalScrollBarPolicy(
-        #     QtGui.Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(
+            QtGui.Qt.ScrollBarAlwaysOff)
         self.layout.addWidget(self.scroll_area)
 
 
@@ -55,5 +55,4 @@ class ScrollFlowWidget(ScrollContainer):
         widget = QtWidgets.QWidget()
         self.scroll_area.setWidget(widget)
         self.flow_layout = FlowLayout()
-        # self.flow_layout = QtWidgets.QVBoxLayout()
         widget.setLayout(self.flow_layout)

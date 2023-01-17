@@ -35,14 +35,14 @@ class AnimationWidget(FilePreviewWidgetBase):
         self._hover = False
         self.start_img = None
 
-    def get_start_frame(self):
+    def get_start_frame(self) -> int:
         return int(self.meta_data.get("frame_range")[0])
 
-    def get_end_frame(self):
+    def get_end_frame(self) -> int:
         return int(self.meta_data.get("frame_range")[1])
 
-    def get_framerate(self):
-        return self.meta_data.get("time_unit")
+    def get_framerate(self) -> float:
+        return float(self.meta_data.get("time_unit"))
 
     def change_image(self):
         """
@@ -143,7 +143,7 @@ class SerialAnimatorView(FileLibraryView):
         self.load_grp.setTitle("Load Animation")
         self.setWindowTitle("Animation Library")
 
-    def grab_preview(self, out_dir):
+    def grab_preview(self, out_dir) -> AnimationViewGrabber:
         """Opens a preview viewport and grabs image-sequence from it"""
         img_path = os.path.join(out_dir, "preview")
         start, end = animation_io.get_frame_range()

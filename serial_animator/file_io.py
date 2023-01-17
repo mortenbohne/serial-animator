@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 # _logger.setLevel("DEBUG")
 
 
-def archive_files(files, out_path, compression=""):
+def archive_files(files, out_path, compression="") -> str:
     """Creates a tar-archive at out_path containing specified files"""
     tf = None
     try:
@@ -28,7 +28,7 @@ def archive_files(files, out_path, compression=""):
     return out_path
 
 
-def extract_file_from_archive(path, out_dir, file_name="preview.jpg"):
+def extract_file_from_archive(path, out_dir, file_name="preview.jpg") -> str:
     tar = tarfile.open(path)
     try:
         tar.extract(file_name, out_dir)
@@ -38,7 +38,7 @@ def extract_file_from_archive(path, out_dir, file_name="preview.jpg"):
     return out
 
 
-def read_data_from_archive(archive_path, json_name):
+def read_data_from_archive(archive_path, json_name) -> dict:
     with tarfile.open(archive_path) as tf:
         j_data = tf.extractfile(json_name)
         data = json.load(j_data)

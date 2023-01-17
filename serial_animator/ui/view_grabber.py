@@ -8,7 +8,7 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel("DEBUG")
 
 
-def get_current_camera():
+def get_current_camera() -> pm.nodetypes.Transform:
     current_viewport_name = pm.playblast(activeEditor=True).split("|")[-1]
     current_camera = pm.modelPanel(current_viewport_name, query=True, camera=True)
     cam = pm.PyNode(current_camera)
