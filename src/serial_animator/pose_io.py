@@ -1,13 +1,13 @@
 import os
 import tempfile
 import pymel.core as pm
-from serial_animator.exceptions import SerialAnimatorError
-from serial_animator.file_io import (
+from src.serial_animator.exceptions import SerialAnimatorError
+from src.serial_animator.file_io import (
     archive_files,
     read_data_from_archive,
     write_pynode_data_to_json,
 )
-import serial_animator.find_nodes as find_nodes
+import src.serial_animator.find_nodes as find_nodes
 
 import logging
 

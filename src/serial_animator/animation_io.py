@@ -1,9 +1,8 @@
 import os
 import shutil
-from typing import List
 
 import pymel.core as pm
-from serial_animator.file_io import (
+from src.serial_animator.file_io import (
     write_json_data,
     archive_files,
     write_pynode_data_to_json,

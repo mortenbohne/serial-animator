@@ -1,14 +1,14 @@
 from PySide2 import QtCore, QtGui
 
-from serial_animator.utils import Undo
-import serial_animator.pose_io as pose_io
-from serial_animator.ui.utils import get_maya_main_window
-from serial_animator.ui.file_view import (
+from src.serial_animator.utils import Undo
+import src.serial_animator.pose_io as pose_io
+from src.serial_animator.ui.utils import get_maya_main_window
+from src.serial_animator.ui.file_view import (
     FileLibraryView,
     FilePreviewWidgetBase,
     FileWidgetHolderBase,
 )
-from serial_animator.ui.view_grabber import GeometryViewGrabber
+from src.serial_animator.ui.view_grabber import GeometryViewGrabber
 
 import logging
 
