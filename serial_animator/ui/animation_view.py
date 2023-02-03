@@ -25,7 +25,6 @@ class AnimationWidget(FilePreviewWidgetBase):
     def __init__(self, path):
         super(AnimationWidget, self).__init__(path)
         self.meta_data = animation_io.extract_meta_data(self.path)
-        _logger.debug(f"{self.meta_data=}")
         self.frame_rate = self.get_framerate()
         self.start_frame = self.get_start_frame()
         self.frame = self.start_frame
@@ -97,7 +96,8 @@ class AnimationWidget(FilePreviewWidgetBase):
             with tarfile.open(self.path) as tf:
                 img_file = tf.extractfile(preview_image_name)
                 with tempfile.NamedTemporaryFile(
-                        prefix="Serial_animator", suffix=".png", delete=False) as img:
+                        prefix="Serial_animator", suffix=".png", delete=False
+                ) as img:
                     img.write(img_file.read())
                     tmp_file_name = img.name
                 self.set_image(tmp_file_name)
@@ -132,6 +132,7 @@ class SerialAnimatorView(FileLibraryView):
     """
     Main UI for saving loading and previewing animations in library
     """
+
     FileType = "anim"
     ImageGrabber = AnimationViewGrabber
     DataHolderWidget = AnimationWidgetHolder
@@ -152,7 +153,6 @@ class SerialAnimatorView(FileLibraryView):
 
     def save_data(self, img_path):
         out_path = self.get_out_path()
-        _logger.debug(f"{out_path=}")
         preview_dir = os.path.dirname(img_path)
         animation_io.save_animation_from_selection(out_path, preview_dir)
 

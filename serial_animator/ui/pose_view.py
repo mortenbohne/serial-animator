@@ -73,6 +73,7 @@ class PoseWidgetHolder(FileWidgetHolderBase):
 
 class PoseLibraryView(FileLibraryView):
     """UI for editing poses"""
+
     FileType = pose_io.get_pose_filetype()
     ImageGrabber = GeometryViewGrabber
     DataHolderWidget = PoseWidgetHolder

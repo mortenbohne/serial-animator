@@ -9,10 +9,8 @@ try:
 
     _logger.debug("Using Maya Mixins as base widgets")
 
-
     class WidgetBase(QtWidgets.QWidget, MayaQWidgetBaseMixin):
         pass
-
 
     class DialogBase(QtWidgets.QDialog, MayaQWidgetBaseMixin):
         pass
@@ -44,8 +42,7 @@ class ScrollContainer(QtWidgets.QWidget):
         self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFocusPolicy(QtGui.Qt.NoFocus)
-        self.scroll_area.setHorizontalScrollBarPolicy(
-            QtGui.Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(QtGui.Qt.ScrollBarAlwaysOff)
         self.layout.addWidget(self.scroll_area)
 
 
