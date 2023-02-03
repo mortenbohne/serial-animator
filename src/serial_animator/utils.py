@@ -74,3 +74,16 @@ class Undo(ContextDecorator):
             pm.undoInfo(closeChunk=True)
         else:
             pm.undoInfo(state=self.orig_state)
+
+
+def is_interactive() -> bool:
+    """Checking if maya is running with a GUI"""
+    # would be lovely if om.MGlobal.mayaState() would show this as
+    # expected...but running mayapy.exe returns the same as normal
+    # gui mode (2023.2)
+    try:
+        if pm.about(batch=True):
+            return False
+    except AttributeError:
+        return False
+    return True
