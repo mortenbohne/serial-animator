@@ -1,6 +1,6 @@
 from PySide2 import QtWidgets, QtGui
 import logging
-from src.serial_animator.ui.flowlayout import FlowLayout
+from serial_animator.ui.flowlayout import FlowLayout
 
 _logger = logging.getLogger(__name__)
 

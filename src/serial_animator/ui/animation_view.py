@@ -4,14 +4,14 @@ import tarfile
 import tempfile
 
 from PySide2 import QtCore
-import src.serial_animator.animation_io as animation_io
-from src.serial_animator.ui.utils import get_maya_main_window
-from src.serial_animator.ui.file_view import (
+import serial_animator.animation_io as animation_io
+from serial_animator.ui.utils import get_maya_main_window
+from serial_animator.ui.file_view import (
     FileLibraryView,
     FileWidgetHolderBase,
     FilePreviewWidgetBase,
 )
-from src.serial_animator.ui.view_grabber import AnimationViewGrabber
+from serial_animator.ui.view_grabber import AnimationViewGrabber
 
 import logging
 
