@@ -1,4 +1,5 @@
 import os
+import pathlib
 import sys
 from typing import Generator, List
 import subprocess
@@ -21,12 +22,12 @@ _logger.setLevel(logging.DEBUG)
 class FilePreviewWidgetBase(QtWidgets.QLabel):
     """Widget displaying an image extracted from archive from path"""
 
-    def __init__(self, path):
+    def __init__(self, path: pathlib.Path):
         super(FilePreviewWidgetBase, self).__init__()
         self.path = path
-        self.setText(self.path)
+        self.setText(str(self.path))
         self.set_start_image()
-        self.setToolTip(self.path)
+        self.setToolTip(str(self.path))
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
@@ -48,17 +49,17 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
 
     def show_in_os(self):
         if sys.platform == "win32":
-            subprocess.Popen("explorer /select, {}".format(os.path.realpath(self.path)))
+            subprocess.Popen(f"explorer /select, {self.path}")
         elif sys.platform == "darwin":
             subprocess.Popen(["open", self.path])
 
     def delete(self):
-        _logger.debug("deleting {}".format(self.path))
+        _logger.debug(f"deleting {self.path}")
         try:
             os.remove(self.path)
         except (IOError, WindowsError):
             if not os.access(self.path, os.W_OK):
-                _logger.critical("Couldn't delete locked file: {}".format(self.path))
+                _logger.critical(f"Couldn't delete locked file: {self.path}")
                 return
             else:
                 raise
@@ -74,7 +75,7 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
             img_path = self.get_preview_image_path(self.path, tmp_dir)
             self.set_image(img_path)
 
-    def set_image(self, img_path):
+    def set_image(self, img_path: str):
         pix = QtGui.QPixmap()
         if os.path.isfile(img_path):
             pix.load(img_path)
@@ -95,7 +96,7 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
     FileType: str
     DataWidgetClass = FilePreviewWidgetBase
 
-    def __init__(self, path):
+    def __init__(self, path: pathlib.Path):
         super(FileWidgetHolderBase, self).__init__()
         self.path = path
         self.layout = QtWidgets.QVBoxLayout()
@@ -103,16 +104,16 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
         scroll = ScrollFlowWidget()
         self.layout.addWidget(scroll)
         self.data_widget_layout = scroll.flow_layout
-        self.path_label = QtWidgets.QLabel(path)
+        self.path_label = QtWidgets.QLabel(str(path))
         self.path_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         self.data_widgets = list()
         self.update_content()
-        self.setToolTip(self.path)
+        self.setToolTip(str(self.path))
 
     def get_files(self) -> Generator[str, None, None]:
-        for f in os.listdir(self.path):
-            if f.endswith(f".{self.FileType}"):
-                yield os.path.normpath(os.path.join(self.path, f))
+        for f in self.path.iterdir():
+            if str(f).endswith(f".{self.FileType}"):
+                yield f
 
     def update_content(self):
         self.clear_widgets()
@@ -142,7 +143,7 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
         # Couldn't get updating QPixmap to work, so for now clearing the content
         # for w in self.data_widgets:
         #     if w.path == path:
-        #         _logger.debug("Updating widget based on {}".format(path))
+        #         _logger.debug(f"Updating widget based on {path}")
         #         return w.set_start_image()
         # _logger.debug("Updating all widgets")
         self.update_content()
@@ -165,7 +166,7 @@ class TabWidget(QtWidgets.QTabWidget):
         )
         self.file_watcher = QtCore.QFileSystemWatcher()
         self.file_watcher.directoryChanged.connect(self.dir_changed)
-        self.setObjectName("SerialAnimator_TabWidget_{}".format(uuid.uuid4().hex))
+        self.setObjectName(f"SerialAnimator_TabWidget_{uuid.uuid4().hex}")
         self._callback_id = setup_scene_opened_callback(
             self.reload_tabs, parent=self.objectName()
         )
@@ -176,11 +177,10 @@ class TabWidget(QtWidgets.QTabWidget):
         raise NotImplementedError
 
     def add_tabs(self):
-        for i, p in enumerate(self.get_asset_locations()):
-            name = os.path.abspath(os.path.join(p, os.pardir))
-            name = os.path.split(name)[-1]
+        for _, p in enumerate(self.get_asset_locations()):
+            name = p.name
             tab = self.add_tab(p)
-            self.file_watcher.addPath(p)
+            self.file_watcher.addPath(str(p))
             self.addTab(tab, name)
         self.set_current_tab_from_settings()
 
@@ -272,7 +272,7 @@ class FileLibraryView(MayaWidget):
         self.restoreGeometry(self.ui_settings.value("geometry"))
 
     @staticmethod
-    def get_asset_locations() -> List[str]:
+    def get_asset_locations() -> List[pathlib.Path]:
         """Gets location of assets displayed in tabs"""
         locations = list()
 
