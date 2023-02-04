@@ -2,7 +2,7 @@ import os
 import getpass
 from typing import Optional
 import pymel.core as pm
-from src.serial_animator.exceptions import SerialAnimatorSceneNotSavedError
+from serial_animator.exceptions import SerialAnimatorSceneNotSavedError
 
 
 def get_scene_name() -> str:

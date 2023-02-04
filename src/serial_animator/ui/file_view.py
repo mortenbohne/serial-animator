@@ -8,11 +8,11 @@ import uuid
 
 from PySide2 import QtWidgets, QtCore, QtGui
 
-from src.serial_animator.utils import get_user_preference_dir, setup_scene_opened_callback
-import src.serial_animator.file_io
-import src.serial_animator.scene_paths as scene_paths
-from src.serial_animator.ui.widgets import MayaWidget, ScrollFlowWidget
-from src.serial_animator.ui.view_grabber import TmpViewport
+from serial_animator.utils import get_user_preference_dir, setup_scene_opened_callback
+import serial_animator.file_io
+import serial_animator.scene_paths as scene_paths
+from serial_animator.ui.widgets import MayaWidget, ScrollFlowWidget
+from serial_animator.ui.view_grabber import TmpViewport
 
 _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
@@ -83,7 +83,7 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
 
     @staticmethod
     def get_preview_image_path(path, directory) -> str:
-        return src.serial_animator.file_io.extract_file_from_archive(path, directory)
+        return serial_animator.file_io.extract_file_from_archive(path, directory)
 
 
 class FileWidgetHolderBase(QtWidgets.QWidget):
