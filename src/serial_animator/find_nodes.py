@@ -1,5 +1,5 @@
 """Utilities to find nodes from path-name but in different namespaces"""
-from typing import Generator, Optional
+from typing import Generator, Optional, List
 import logging
 import pymel.core as pm
 
@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 # _logger.setLevel("DEBUG")
 
 
-def search_nodes(node_paths, target_nodes) -> dict:
+def search_nodes(node_paths: List[str], target_nodes: List[pm.PyNode]) -> dict:
     """
     finds relevant nodes in target-dict based on full path defined in
     node_paths.
@@ -21,7 +21,6 @@ def search_nodes(node_paths, target_nodes) -> dict:
     node_list = list(target_dict.values())
     scene_namespaces = pm.namespaceInfo(listNamespace=True)
     for node_name in node_paths:
-        _logger.debug(f"{node_name=}")
         for ns, search_name in strip_namespaces_gen(node_name):
             if ns in scene_namespaces:
                 if search_name in target_dict.keys():
@@ -42,7 +41,7 @@ def search_nodes(node_paths, target_nodes) -> dict:
     return node_dict
 
 
-def strip_namespaces_gen(name) -> Generator[str, None, None]:
+def strip_namespaces_gen(name: str) -> Generator[str, None, None]:
     """
     Generator to strip namespaces from node path name.
     Returns namespace-name and node-path
@@ -60,7 +59,7 @@ def strip_namespaces_gen(name) -> Generator[str, None, None]:
     yield "", name.replace(full_ns, "")
 
 
-def strip_all_namespaces(name) -> Optional[str]:
+def strip_all_namespaces(name: str) -> Optional[str]:
     """Strips all namespaces from node-path"""
     tokens = name.split("|")
     if len(tokens) == 1:
@@ -70,7 +69,7 @@ def strip_all_namespaces(name) -> Optional[str]:
     return name.replace(namespaces, "")
 
 
-def get_node_path_dict(nodes) -> dict:
+def get_node_path_dict(nodes: List[pm.PyNode]) -> dict:
     path_dict = dict()
     for node in nodes:
         try:
