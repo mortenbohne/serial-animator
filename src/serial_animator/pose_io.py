@@ -5,15 +5,14 @@ from serial_animator.exceptions import SerialAnimatorError
 from serial_animator.file_io import (
     archive_files,
     read_data_from_archive,
-    write_pynode_data_to_json,
+    write_json_data,
+    node_dict_to_path_dict
 )
 import serial_animator.find_nodes as find_nodes
 
 import logging
 
 _logger = logging.getLogger(__name__)
-
-
 # _logger.setLevel("DEBUG")
 
 
@@ -58,15 +57,20 @@ def get_data_from_nodes(nodes=None) -> dict:
     return data
 
 
-def save_pose_from_selection(path, img_path) -> str:
+def save_pose_from_selection(path: str, img_path: str) -> str:
     """
     Saves data for selected nodes to path and archives preview-image
     with it
     """
     data = get_data_from_nodes()
+    path_data = node_dict_to_path_dict(data)
+    return save_data(path, path_data, img_path)
+
+
+def save_data(path, data: dict, img_path) -> str:
     with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
         pose_path = os.path.join(tmp_dir, "pose.json")
-        write_pynode_data_to_json(data, pose_path)
+        write_json_data(data, pose_path)
         archive = archive_files(files=[pose_path, img_path], out_path=path)
     return archive
 
@@ -128,6 +132,7 @@ def read_pose_data(path) -> dict:
 def read_pose_data_to_nodes(path, nodes=None) -> dict:
     data = read_pose_data(path)
     node_dict = find_nodes.search_nodes(data.keys(), nodes)
+    _logger.info(node_dict)
     pose = dict()
     for node_name, node_data in data.items():
         node = node_dict.get(node_name)

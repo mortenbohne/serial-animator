@@ -59,3 +59,13 @@ def write_pynode_data_to_json(data, path):
         except AttributeError:
             clean_data[k.name()] = v
     write_json_data(clean_data, path)
+
+
+def node_dict_to_path_dict(node_dict):
+    node_path_data = dict()
+    for k, v in node_dict.items():
+        try:
+            node_path_data[k.fullPath()] = v
+        except AttributeError:
+            node_path_data[k.name()] = v
+    return node_path_data
