@@ -1,5 +1,6 @@
 """Widgets for saving, loading and editing animation files"""
 import os
+from pathlib import Path
 import tarfile
 import tempfile
 
@@ -144,16 +145,16 @@ class SerialAnimatorView(FileLibraryView):
         self.load_grp.setTitle("Load Animation")
         self.setWindowTitle("Animation Library")
 
-    def grab_preview(self, out_dir) -> AnimationViewGrabber:
+    def grab_preview(self, out_dir: Path) -> AnimationViewGrabber:
         """Opens a preview viewport and grabs image-sequence from it"""
-        img_path = os.path.join(out_dir, "preview")
+        img_path = out_dir / "preview"
         start, end = animation_io.get_frame_range()
         grabber_window = self.ImageGrabber(img_path, start_frame=start, end_frame=end)
         return grabber_window
 
     def save_data(self, img_path):
         out_path = self.get_out_path()
-        preview_dir = os.path.dirname(img_path)
+        preview_dir = img_path.parent
         animation_io.save_animation_from_selection(out_path, preview_dir)
 
 

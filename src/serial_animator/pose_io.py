@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import tempfile
 import pymel.core as pm
 from serial_animator.exceptions import SerialAnimatorError
@@ -57,7 +57,7 @@ def get_data_from_nodes(nodes=None) -> dict:
     return data
 
 
-def save_pose_from_selection(path: str, img_path: str) -> str:
+def save_pose_from_selection(path: Path, img_path: Path) -> Path:
     """
     Saves data for selected nodes to path and archives preview-image
     with it
@@ -67,9 +67,9 @@ def save_pose_from_selection(path: str, img_path: str) -> str:
     return save_data(path, path_data, img_path)
 
 
-def save_data(path, data: dict, img_path) -> str:
+def save_data(path, data: dict, img_path) -> Path:
     with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
-        pose_path = os.path.join(tmp_dir, "pose.json")
+        pose_path = Path(tmp_dir) / "pose.json"
         write_json_data(data, pose_path)
         archive = archive_files(files=[pose_path, img_path], out_path=path)
     return archive
