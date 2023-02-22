@@ -29,25 +29,17 @@ def test_cube():
 
 
 @pytest.fixture()
-def pose_file(tmp_path, get_test_data_preview, get_test_data):
+def pose_file(tmp_path, test_data_preview, get_test_data):
     out_path = tmp_path / "tmp_pose_file.pose"
-    pose_io.save_data(out_path, get_test_data, get_test_data_preview)
+    pose_io.save_data(out_path, get_test_data, test_data_preview)
     yield out_path
 
 
-@pytest.fixture()
-def get_test_data():
-    return {
-        "|pCube1": {
-            "v": True,
-            "tx": -2.526906870875038,
-            "ty": 2.0449175883476016,
-            "tz": 0.0,
-            "rx": 26.036432965708386,
-            "ry": 7.951386703658792e-16,
-            "rz": -27.076318145075327,
-            "sx": 1.0,
-            "sy": 1.0,
-            "sz": 1.0,
-        }
-    }
+def test_node_dict_to_path_dict(test_cube):
+    node_dict = dict()
+    node_dict[test_cube] = 1
+    path_dict = pose_io.node_dict_to_path_dict(node_dict)
+    assert len(node_dict.keys()) == len(path_dict)
+    for node in node_dict.keys():
+        v = node_dict[node]
+        assert v == path_dict[node.fullPath()]
