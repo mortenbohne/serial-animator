@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 import pymel.core as pm
 import serial_animator.find_nodes as find_nodes
@@ -21,11 +23,14 @@ def test_strip_namespace_gen(namespaced_cube):
     assert res[-1][0] == ""
 
 
-def test_strip_all_namespaces(cube, namespaced_cube):
+def test_strip_all_namespaces(cube, namespaced_cube, caplog):
     assert find_nodes.strip_all_namespaces(cube.fullPath()) == "|pCube1"
     assert (
             find_nodes.strip_all_namespaces(namespaced_cube.fullPath()) == "|namespacedCube"
     )
+    with caplog.at_level(logging.WARNING):
+        assert find_nodes.strip_all_namespaces("not_a_node_path") == None
+        assert "not a valid node-path" in caplog.text
 
 
 def test_get_node_path_dict(two_cubes):
