@@ -1,5 +1,6 @@
 import pytest
 import pymel.core as pm
+
 import serial_animator.find_nodes as find_nodes
 import logging
 
@@ -82,3 +83,19 @@ def namespaced_cube():
     pm.namespace(set=":")
     yield cube
     pm.newFile(force=True)
+
+
+def test_node_dict_to_path_dict(cube, time_node):
+    node_dict = dict()
+    node_dict[cube] = 1
+    path_dict = find_nodes.node_dict_to_path_dict(node_dict)
+    assert len(node_dict.keys()) == len(path_dict)
+    for node in node_dict.keys():
+        v = node_dict[node]
+        assert v == path_dict[node.fullPath()]
+    non_dag_node_dict = dict()
+    non_dag_node_dict[time_node] = 1
+    non_dag_path_dict = find_nodes.node_dict_to_path_dict(non_dag_node_dict)
+    for node in non_dag_node_dict.keys():
+        v = non_dag_node_dict[node]
+        assert v == non_dag_path_dict[node.longName()]
