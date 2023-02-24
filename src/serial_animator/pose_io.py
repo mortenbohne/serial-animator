@@ -11,6 +11,7 @@ import serial_animator.find_nodes as find_nodes
 
 import logging
 
+
 _logger = logging.getLogger(__name__)
 # _logger.setLevel("DEBUG")
 
@@ -62,7 +63,7 @@ def save_pose_from_selection(path: Path, img_path: Path) -> Path:
     with it
     """
     data = get_data_from_nodes()
-    path_data = node_dict_to_path_dict(data)
+    path_data = find_nodes.node_dict_to_path_dict(data)
     return save_data(path, path_data, img_path)
 
 
@@ -161,13 +162,3 @@ def refresh_viewport():
 
 def get_pose_filetype() -> str:
     return "pose"
-
-
-def node_dict_to_path_dict(node_dict: dict) -> dict:
-    node_path_data = dict()
-    for k, v in node_dict.items():
-        try:
-            node_path_data[k.fullPath()] = v
-        except AttributeError:
-            node_path_data[k.name()] = v
-    return node_path_data

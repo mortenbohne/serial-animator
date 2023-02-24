@@ -6,17 +6,10 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
 
 
-@pytest.fixture()
-def tmp_archive(tmp_path, test_json, test_data_preview):
-    out_path = tmp_path / "tmp_archive.tar"
-    serial_animator.file_io.archive_files(
-        files=[test_data_preview, test_json], out_path=out_path
-    )
-    yield out_path
-
-
-def test_archive_files(tmp_archive):
+def test_archive_files(tmp_archive, tmp_path, json_file):
     assert tmp_archive.is_file()
+    out_path = tmp_path / "non_existent_dir" / "tmp_archive.tar"
+    serial_animator.file_io.archive_files(files=[json_file], out_path=out_path)
 
 
 def test_extract_file_from_archive(tmp_archive, tmp_path):
@@ -34,13 +27,22 @@ def test_write_json_data(tmp_path):
     assert out_json.is_file()
 
 
+def test_read_data_from_archive(tmp_archive, get_test_data):
+    data = serial_animator.file_io.read_data_from_archive(tmp_archive, "test.json")
+    assert data == get_test_data
+
+
 @pytest.fixture()
-def test_json(tmp_path, get_test_data):
+def json_file(tmp_path, get_test_data):
     path = tmp_path / "test.json"
     serial_animator.file_io.write_json_data(data=get_test_data, path=path)
     return path
 
 
-def test_read_data_from_archive(tmp_archive, get_test_data):
-    data = serial_animator.file_io.read_data_from_archive(tmp_archive, "test.json")
-    assert data == get_test_data
+@pytest.fixture()
+def tmp_archive(tmp_path, json_file, test_data_preview):
+    out_path = tmp_path / "tmp_archive.tar"
+    serial_animator.file_io.archive_files(
+        files=[test_data_preview, json_file], out_path=out_path
+    )
+    yield out_path

@@ -28,15 +28,15 @@ def search_nodes(node_paths: List[str], target_nodes: List[pm.PyNode]) -> dict:
             else:
                 c = stripped_names.count(search_name)
                 if not c:
-                    _logger.debug(f"no nodes match {search_name}")
+                    _logger.debug(f"No nodes match {search_name}")
                 elif c == 1:
                     node_dict[node_name] = node_list[stripped_names.index(search_name)]
                     _logger.debug(f"found {node_name}")
                     break
                 else:
-                    _logger.warning(f"multiple nodes match {search_name}")
+                    _logger.warning(f"Multiple nodes match {search_name}")
         else:
-            _logger.debug(f"didn't find target for {node_name}")
+            _logger.debug(f"Didn't find target for {node_name}")
 
     return node_dict
 
@@ -49,7 +49,7 @@ def strip_namespaces_gen(name: str) -> Generator[str, None, None]:
     tokens = name.split("|")
     if len(tokens) == 1:
         _logger.warning(f"{name} is not a valid node-path")
-        return
+        yield
     parts = tokens[1].split(":")
     for i, part in enumerate(parts[:-1]):
         search_string = ":".join(parts[: i + 1]) + ":"
@@ -78,3 +78,13 @@ def get_node_path_dict(nodes: List[pm.PyNode]) -> dict:
             # non-dag nodes doesn't have a "fullPath" attribute
             pass
     return path_dict
+
+
+def node_dict_to_path_dict(node_dict: dict) -> dict:
+    node_path_data = dict()
+    for k, v in node_dict.items():
+        try:
+            node_path_data[k.fullPath()] = v
+        except AttributeError:
+            node_path_data[k.name()] = v
+    return node_path_data

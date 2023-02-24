@@ -18,9 +18,8 @@ def archive_files(files: List[Path], out_path: Path, compression="") -> Path:
         for f in files:
             if f.is_file():
                 if not tf:
-                    out_dir = os.path.dirname(out_path)
-                    if not os.path.exists(out_dir):
-                        os.makedirs(out_dir)
+                    out_dir = out_path.parent
+                    out_dir.mkdir(parents=True, exist_ok=True)
                     tf = tarfile.open(out_path, mode="w:{0}".format(compression))
                 tf.add(f, f.name)
     finally:
@@ -52,13 +51,3 @@ def write_json_data(data: dict, path: Path, encoder=json.JSONEncoder):
     with open(path, "w") as f:
         json.dump(data, fp=f, indent=4, cls=encoder)
     _logger.debug("Wrote data to file: {}".format(path))
-
-
-def write_pynode_data_to_json(data: dict, path: Path):
-    clean_data = dict()
-    for k, v in data.items():
-        try:
-            clean_data[k.fullPath()] = v
-        except AttributeError:
-            clean_data[k.name()] = v
-    write_json_data(clean_data, path)

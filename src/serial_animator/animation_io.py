@@ -5,9 +5,9 @@ import pymel.core as pm
 from serial_animator.file_io import (
     write_json_data,
     archive_files,
-    write_pynode_data_to_json,
     read_data_from_archive,
 )
+import serial_animator.find_nodes
 
 import logging
 
@@ -47,7 +47,8 @@ def save_animation_from_selection(path, preview_dir_path) -> str:
     shutil.copy(
         os.path.join(preview_dir_path, get_preview_image(images)), preview_image
     )
-    write_pynode_data_to_json(anim_data, anim_data_path)
+    path_data = serial_animator.find_nodes.node_dict_to_path_dict(anim_data)
+    write_json_data(path_data, anim_data_path)
     write_json_data(meta_data, meta_path)
     files = [preview_image, meta_path, anim_data_path, *images]
     _logger.debug(f"files: {files}")
