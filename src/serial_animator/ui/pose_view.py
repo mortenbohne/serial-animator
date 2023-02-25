@@ -10,9 +10,9 @@ from serial_animator.ui.file_view import (
 )
 from serial_animator.ui.view_grabber import GeometryViewGrabber
 
-import logging
+import serial_animator.log
 
-_logger = logging.getLogger(__name__)
+_logger = serial_animator.log.log(__name__)
 
 
 class PoseWidget(FilePreviewWidgetBase):
@@ -52,7 +52,7 @@ class PoseWidget(FilePreviewWidgetBase):
         self.start_pose = dict()
         self.apply_pose(1)
 
-    def apply_pose(self, weight):
+    def apply_pose(self, weight: float):
         if not self.nodes:
             self.nodes = pose_io.get_nodes()
         if not self.target_pose:

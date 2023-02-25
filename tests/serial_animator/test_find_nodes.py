@@ -4,8 +4,9 @@ import pymel.core as pm
 import serial_animator.find_nodes as find_nodes
 import logging
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+import serial_animator.log
+
+_logger = serial_animator.log.log(__name__)
 
 
 def test_search_nodes(namespaced_cube, cube, caplog):
@@ -17,7 +18,6 @@ def test_search_nodes(namespaced_cube, cube, caplog):
     assert len(find_nodes.search_nodes(node_paths, [namespaced_cube]).keys()) == 1
     node_dict = find_nodes.search_nodes(node_paths, [namespaced_cube])
     assert isinstance(node_dict, dict)
-    _logger.info(namespaced_cube)
     cube.rename("namespacedCube")
     with caplog.at_level(logging.WARNING):
         find_nodes.search_nodes(node_paths, [namespaced_cube, cube])
@@ -25,8 +25,6 @@ def test_search_nodes(namespaced_cube, cube, caplog):
     with caplog.at_level(logging.DEBUG):
         find_nodes.search_nodes(["|nonExistentNode"], [cube])
         assert "Didn't find target for" in caplog.text
-
-    _logger.info(cube)
 
 
 def test_strip_namespaces_gen(namespaced_cube, cube, caplog):
@@ -53,21 +51,6 @@ def test_strip_all_namespaces(cube, namespaced_cube, caplog):
 def test_get_node_path_dict(two_cubes, time_node):
     assert isinstance(find_nodes.get_node_path_dict(two_cubes), dict)
     assert find_nodes.get_node_path_dict([time_node]) == dict()
-
-
-@pytest.fixture()
-def two_cubes():
-    cube1 = pm.polyCube(constructionHistory=False)[0]
-    cube2 = pm.polyCube(constructionHistory=False)[0]
-    yield [cube1, cube2]
-    pm.newFile(force=True)
-
-
-@pytest.fixture()
-def cube():
-    cube = pm.polyCube(constructionHistory=False)[0]
-    yield cube
-    pm.newFile(force=True)
 
 
 @pytest.fixture()

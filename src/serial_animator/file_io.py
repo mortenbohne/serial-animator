@@ -1,13 +1,11 @@
-import os
 from typing import List
 from pathlib import Path
 import tarfile
 import json
 
-import logging
+import serial_animator.log
 
-_logger = logging.getLogger(__name__)
-
+_logger = serial_animator.log.log(__name__)
 _logger.setLevel("DEBUG")
 
 
