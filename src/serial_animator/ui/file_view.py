@@ -308,7 +308,7 @@ class FileLibraryView(MayaWidget):
         save_data
         """
         with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
-            grabber_window = self.grab_preview(tmp_dir)
+            grabber_window = self.grab_preview(Path(tmp_dir))
             grabber_window.snap_taken.connect(self.save_data)
 
     def grab_preview(self, out_dir) -> TmpViewport:
