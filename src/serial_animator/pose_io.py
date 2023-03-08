@@ -9,9 +9,9 @@ from serial_animator.file_io import (
 )
 import serial_animator.find_nodes as find_nodes
 
-import serial_animator.log
+import logging
 
-_logger = serial_animator.log.log(__name__)
+_logger = logging.getLogger(__name__)
 
 
 # _logger.setLevel("DEBUG")

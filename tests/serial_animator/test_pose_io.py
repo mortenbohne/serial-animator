@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 import pymel.core as pm
 
@@ -32,7 +34,10 @@ def test_save_pose_from_selection(tmp_path, cube, data_preview):
     assert archive.is_file()
     node_data = pose_io.get_data_from_nodes([cube])
     pose_path_data = serial_animator.find_nodes.node_dict_to_path_dict(node_data)
-    assert serial_animator.file_io.read_data_from_archive(archive, "pose.json") == pose_path_data
+    assert (
+            serial_animator.file_io.read_data_from_archive(archive, "pose.json")
+            == pose_path_data
+    )
 
 
 def test_read_pose_data(pose_file, cube_keyable_data):
@@ -50,20 +55,29 @@ def test_read_pose_data_to_nodes(cube, pose_file, cube_keyable_data):
         assert cube.attr(k).get() == v
 
 
-def test_interpolate(pose_file, cube_keyable_data):
+def test_interpolate(pose_file, cube_keyable_data, caplog):
     pm.newFile(force=True)
     cube = pm.polyCube(constructionHistory=False)[0]
     start_pose = pose_io.get_data_from_nodes([cube])
     target_pose = pose_io.read_pose_data_to_nodes(pose_file, [cube])
-    pose_io.interpolate(target=target_pose, origin=start_pose, weight=.1)
+    target_pose[cube]["non_existent_attribute"] = 1.0
+    _logger.info(target_pose)
+    cube.tx.lock()
+    with caplog.at_level(logging.DEBUG):
+        pose_io.interpolate(target=target_pose, origin=start_pose, weight=0.1)
+        assert "doesn't have the attribute" in caplog.text
+        assert "is locked" in caplog.text
     cube_data = cube_keyable_data.get(cube.fullPath())
     for k, v in cube_data.items():
         if not isinstance(v, float):
             continue
+        # tx is locked in this test
+        if k == "tx":
+            continue
         o_value = start_pose[cube][k]
-        delta = (v - o_value) * .1
+        delta = (v - o_value) * 0.1
         assert cube.attr(k).get() == pytest.approx(o_value + delta)
-    pose_io.interpolate(target=target_pose, origin=start_pose, weight=.2)
+    pose_io.interpolate(target=target_pose, origin=start_pose, weight=0.2)
 
 
 @pytest.fixture()
