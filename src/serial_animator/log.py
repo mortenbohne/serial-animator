@@ -16,20 +16,16 @@ def log(name):
     Simple stream-logger
     """
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
-
     # create console handler and set level to debug
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-
+    console_handler = logging.StreamHandler()
     # create formatter
     formatter = logging.Formatter(
-        ' %(asctime)s - %(levelname)s - %(name)s - %(funcName)s: %(message)s')
-    logger.propagate = False
+        "%(asctime)s-%(levelname)s:%(name)s.%(funcName)s: %(message)s", "%H:%M:%S"
+    )
     # add formatter to ch
-    ch.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
 
     # add ch to logger
-    logger.handlers = [ch]
+    logger.handlers = [console_handler]
 
     return logger
