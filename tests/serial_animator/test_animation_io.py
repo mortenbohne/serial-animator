@@ -21,8 +21,10 @@ def test_get_nodes(new_scene, keyed_cube, cube):
     assert len(animation_io.get_nodes()) == 1
 
 
-def test_save_animation_from_selection():
-    pass
+def test_save_animation_from_selection(tmp_path, preview_sequence):
+    out_path = tmp_path / "output.anim"
+    result = animation_io.save_animation_from_selection(out_path, preview_sequence)
+    assert result.is_file()
 
 
 @pytest.fixture()
