@@ -48,13 +48,9 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
         context.exec_(self.mapToGlobal(pos))
 
     def show_in_os(self):
-        if sys.platform == "win32":
-            subprocess.Popen(f"explorer /select, {self.path}")
-        elif sys.platform == "darwin":
-            subprocess.Popen(["open", self.path])
+        show_in_os(self.path)
 
     def delete(self):
-        _logger.debug(f"deleting {self.path}")
         try:
             os.remove(self.path)
         except (IOError, WindowsError):
@@ -109,6 +105,18 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
         self.data_widgets = list()
         self.update_content()
         self.setToolTip(str(self.path))
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.on_context_menu)
+
+    def on_context_menu(self, pos):
+        context = QtWidgets.QMenu()
+        open_location_action = QtWidgets.QAction("Open in Explorer", self)
+        open_location_action.triggered.connect(self.show_in_os)
+        context.addAction(open_location_action)
+        context.exec_(self.mapToGlobal(pos))
+
+    def show_in_os(self):
+        show_in_os(self.path)
 
     def get_files(self) -> Generator[Path, None, None]:
         for f in self.path.iterdir():
@@ -330,3 +338,12 @@ class FileLibraryView(MayaWidget):
         return os.path.join(
             get_user_preference_dir(), f"SerialAnimator_{cls.__name__}.ini"
         )
+
+
+def show_in_os(path):
+    if sys.platform == "win32":
+        subprocess.Popen(f"explorer /select, {path}")
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", path])
+    else:
+        os.system(f"xdg-open '{path}'")

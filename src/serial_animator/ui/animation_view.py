@@ -87,6 +87,7 @@ class AnimationWidget(FilePreviewWidgetBase):
         self._hover = False
         self._anim_timer.stop()
         self.set_start_image()
+        self.frame = self.start_frame
 
     def set_temp_image(self, preview_image_name):
         """
