@@ -1,21 +1,22 @@
 import os
 import shutil
+from pathlib import Path
+from typing import List
 
 import pymel.core as pm
 from serial_animator.file_io import (
     write_json_data,
     archive_files,
-    write_pynode_data_to_json,
     read_data_from_archive,
 )
+import serial_animator.find_nodes
 
-import logging
+from . import log
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+_logger = serial_animator.log.log(__name__)
 
 
-def load_animation(path, nodes=None):
+def load_animation(path: Path, nodes=None):
     _logger.debug(f"Applying animation from {path} to {nodes}")
 
 
@@ -24,10 +25,12 @@ def get_nodes() -> [pm.PyNode]:
     Gets selected nodes. If no nodes are selected, get all scene nodes
     """
     nodes = pm.selected() or pm.ls()
+    # don't find animation curves as we will get those from nodes connected to them
+    nodes = [node for node in nodes if not isinstance(node, pm.nodetypes.AnimCurveTL)]
     return [node for node in nodes if pm.keyframe(node, q=True, keyframeCount=True) > 0]
 
 
-def save_animation_from_selection(path, preview_dir_path) -> str:
+def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
     """
     Saves data for selected nodes to path and archives preview-image
     with it
@@ -37,33 +40,32 @@ def save_animation_from_selection(path, preview_dir_path) -> str:
     anim_data = get_anim_data(nodes=nodes, frame_range=frame_range)
     meta_data = get_meta_data(nodes=nodes, frame_range=frame_range)
 
-    meta_path = os.path.join(preview_dir_path, "meta_data.json")
-    anim_data_path = os.path.join(preview_dir_path, "anim_data.json")
-    images = [
-        os.path.join(preview_dir_path, img) for img in os.listdir(preview_dir_path)
-    ]
-    _logger.debug(f"first image: {images}")
-    preview_image = os.path.join(preview_dir_path, "preview.jpg")
+    meta_path = preview_dir_path / "meta_data.json"
+    anim_data_path = preview_dir_path / "anim_data.json"
+    image_paths = list(preview_dir_path.iterdir())
+    _logger.debug(f"first image: {image_paths}")
+    preview_image = preview_dir_path / "preview.jpg"
     shutil.copy(
-        os.path.join(preview_dir_path, get_preview_image(images)), preview_image
+        os.path.join(preview_dir_path, get_preview_image(image_paths)), preview_image
     )
-    write_pynode_data_to_json(anim_data, anim_data_path)
+    path_data = serial_animator.find_nodes.node_dict_to_path_dict(anim_data)
+    write_json_data(path_data, anim_data_path)
     write_json_data(meta_data, meta_path)
-    files = [preview_image, meta_path, anim_data_path, *images]
+    files = [preview_image, meta_path, anim_data_path, *image_paths]
     _logger.debug(f"files: {files}")
     archive = archive_files(
-        files=[preview_image, meta_path, anim_data_path, *images], out_path=path
+        files=[preview_image, meta_path, anim_data_path, *image_paths], out_path=path
     )
 
     return archive
 
 
-def get_preview_image(images) -> str:
+def get_preview_image(images: List[Path]) -> Path:
     """Get the image in an image_sequence closest to current time"""
     current_time = int(pm.currentTime())
 
-    def get_difference(img):
-        return abs(int(img.split(".")[1]) - current_time)
+    def get_difference(img: Path) -> int:
+        return abs(int(img.name.split(".")[1]) - current_time)
 
     return sorted(images, key=get_difference)[0]
 

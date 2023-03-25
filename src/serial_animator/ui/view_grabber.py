@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 from PySide2 import QtWidgets, QtCore
 import logging
 import pymel.core as pm
@@ -24,7 +25,7 @@ def unlock_cam_attributes(camera):
 
 
 class TmpViewport(QtWidgets.QWidget):
-    snap_taken = QtCore.Signal(str)
+    snap_taken = QtCore.Signal(Path)
 
     def __init__(self, out_path, parent=get_maya_main_window()):
         _logger.debug("opening tmp viewport")

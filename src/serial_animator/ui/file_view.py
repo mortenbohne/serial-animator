@@ -1,5 +1,5 @@
 import os
-import pathlib
+from pathlib import Path
 import sys
 from typing import Generator, List
 import subprocess
@@ -22,7 +22,7 @@ _logger.setLevel(logging.DEBUG)
 class FilePreviewWidgetBase(QtWidgets.QLabel):
     """Widget displaying an image extracted from archive from path"""
 
-    def __init__(self, path: pathlib.Path):
+    def __init__(self, path: Path):
         super(FilePreviewWidgetBase, self).__init__()
         self.path = path
         self.setText(str(self.path))
@@ -48,13 +48,9 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
         context.exec_(self.mapToGlobal(pos))
 
     def show_in_os(self):
-        if sys.platform == "win32":
-            subprocess.Popen(f"explorer /select, {self.path}")
-        elif sys.platform == "darwin":
-            subprocess.Popen(["open", self.path])
+        show_in_os(self.path)
 
     def delete(self):
-        _logger.debug(f"deleting {self.path}")
         try:
             os.remove(self.path)
         except (IOError, WindowsError):
@@ -72,8 +68,8 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
         Extracts the start-image from archive, and sets it as pix-map
         """
         with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
-            img_path = self.get_preview_image_path(self.path, tmp_dir)
-            self.set_image(img_path)
+            img_path = self.get_preview_image_path(self.path, Path(tmp_dir))
+            self.set_image(str(img_path))
 
     def set_image(self, img_path: str):
         pix = QtGui.QPixmap()
@@ -83,7 +79,7 @@ class FilePreviewWidgetBase(QtWidgets.QLabel):
         self.setPixmap(pix)
 
     @staticmethod
-    def get_preview_image_path(path, directory) -> str:
+    def get_preview_image_path(path, directory) -> Path:
         return serial_animator.file_io.extract_file_from_archive(path, directory)
 
 
@@ -96,7 +92,7 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
     FileType: str
     DataWidgetClass = FilePreviewWidgetBase
 
-    def __init__(self, path: pathlib.Path):
+    def __init__(self, path: Path):
         super(FileWidgetHolderBase, self).__init__()
         self.path = path
         self.layout = QtWidgets.QVBoxLayout()
@@ -109,15 +105,27 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
         self.data_widgets = list()
         self.update_content()
         self.setToolTip(str(self.path))
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.on_context_menu)
 
-    def get_files(self) -> Generator[str, None, None]:
+    def on_context_menu(self, pos):
+        context = QtWidgets.QMenu()
+        open_location_action = QtWidgets.QAction("Open in Explorer", self)
+        open_location_action.triggered.connect(self.show_in_os)
+        context.addAction(open_location_action)
+        context.exec_(self.mapToGlobal(pos))
+
+    def show_in_os(self):
+        show_in_os(self.path)
+
+    def get_files(self) -> Generator[Path, None, None]:
         for f in self.path.iterdir():
             if str(f).endswith(f".{self.FileType}"):
                 yield f
 
     def update_content(self):
         self.clear_widgets()
-        if os.path.exists(self.path):
+        if self.path.is_dir():
             for f in self.get_files():
                 w = self.create_data_widget(f)
                 self.data_widgets.append(w)
@@ -126,7 +134,7 @@ class FileWidgetHolderBase(QtWidgets.QWidget):
             self.data_widget_layout.addWidget(self.path_label)
             self.data_widgets.append(self.path_label)
 
-    def create_data_widget(self, path) -> FilePreviewWidgetBase:
+    def create_data_widget(self, path: Path) -> FilePreviewWidgetBase:
         return self.DataWidgetClass(path)
 
     def clear_widgets(self):
@@ -272,7 +280,7 @@ class FileLibraryView(MayaWidget):
         self.restoreGeometry(self.ui_settings.value("geometry"))
 
     @staticmethod
-    def get_asset_locations() -> List[pathlib.Path]:
+    def get_asset_locations() -> List[Path]:
         """Gets location of assets displayed in tabs"""
         locations = list()
 
@@ -301,8 +309,6 @@ class FileLibraryView(MayaWidget):
         """
         self.ui_settings.setValue("geometry", self.saveGeometry())
         self.tab_widget.save_current_tab_to_settings()
-        global window
-        window = None
 
     def save_clicked(self):
         """
@@ -310,21 +316,21 @@ class FileLibraryView(MayaWidget):
         save_data
         """
         with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
-            grabber_window = self.grab_preview(tmp_dir)
+            grabber_window = self.grab_preview(Path(tmp_dir))
             grabber_window.snap_taken.connect(self.save_data)
 
     def grab_preview(self, out_dir) -> TmpViewport:
-        img_path = os.path.join(out_dir, "preview.jpg")
+        img_path = Path(out_dir) / "preview.jpg"
         grabber_window = self.ImageGrabber(img_path)
         return grabber_window
 
     def save_data(self, img_path):
         raise NotImplementedError
 
-    def get_out_path(self) -> str:
+    def get_out_path(self) -> Path:
         file_name = f"{self.save_line_edit.text()}.{self.FileType}"
         current_tab_path = self.tab_widget.currentWidget().path
-        return os.path.join(current_tab_path, file_name)
+        return Path(current_tab_path) / file_name
 
     @classmethod
     def get_ui_settings_path(cls) -> str:
@@ -332,3 +338,12 @@ class FileLibraryView(MayaWidget):
         return os.path.join(
             get_user_preference_dir(), f"SerialAnimator_{cls.__name__}.ini"
         )
+
+
+def show_in_os(path):
+    if sys.platform == "win32":
+        subprocess.Popen(f"explorer /select, {path}")
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", path])
+    else:
+        os.system(f"xdg-open '{path}'")

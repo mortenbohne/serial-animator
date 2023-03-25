@@ -1,5 +1,5 @@
 """Utilities to find nodes from path-name but in different namespaces"""
-from typing import Generator, Optional
+from typing import Generator, Optional, List
 import logging
 import pymel.core as pm
 
@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 # _logger.setLevel("DEBUG")
 
 
-def search_nodes(node_paths, target_nodes) -> dict:
+def search_nodes(node_paths: List[str], target_nodes: List[pm.PyNode]) -> dict:
     """
     finds relevant nodes in target-dict based on full path defined in
     node_paths.
@@ -21,7 +21,6 @@ def search_nodes(node_paths, target_nodes) -> dict:
     node_list = list(target_dict.values())
     scene_namespaces = pm.namespaceInfo(listNamespace=True)
     for node_name in node_paths:
-        _logger.debug(f"{node_name=}")
         for ns, search_name in strip_namespaces_gen(node_name):
             if ns in scene_namespaces:
                 if search_name in target_dict.keys():
@@ -29,20 +28,20 @@ def search_nodes(node_paths, target_nodes) -> dict:
             else:
                 c = stripped_names.count(search_name)
                 if not c:
-                    _logger.debug(f"no nodes match {search_name}")
+                    _logger.debug(f"No nodes match {search_name}")
                 elif c == 1:
                     node_dict[node_name] = node_list[stripped_names.index(search_name)]
                     _logger.debug(f"found {node_name}")
                     break
                 else:
-                    _logger.warning(f"multiple nodes match {search_name}")
+                    _logger.warning(f"Multiple nodes match {search_name}")
         else:
-            _logger.debug(f"didn't find target for {node_name}")
+            _logger.debug(f"Didn't find target for {node_name}")
 
     return node_dict
 
 
-def strip_namespaces_gen(name) -> Generator[str, None, None]:
+def strip_namespaces_gen(name: str) -> Generator[str, None, None]:
     """
     Generator to strip namespaces from node path name.
     Returns namespace-name and node-path
@@ -50,7 +49,7 @@ def strip_namespaces_gen(name) -> Generator[str, None, None]:
     tokens = name.split("|")
     if len(tokens) == 1:
         _logger.warning(f"{name} is not a valid node-path")
-        return
+        yield
     parts = tokens[1].split(":")
     for i, part in enumerate(parts[:-1]):
         search_string = ":".join(parts[: i + 1]) + ":"
@@ -60,7 +59,7 @@ def strip_namespaces_gen(name) -> Generator[str, None, None]:
     yield "", name.replace(full_ns, "")
 
 
-def strip_all_namespaces(name) -> Optional[str]:
+def strip_all_namespaces(name: str) -> Optional[str]:
     """Strips all namespaces from node-path"""
     tokens = name.split("|")
     if len(tokens) == 1:
@@ -70,7 +69,7 @@ def strip_all_namespaces(name) -> Optional[str]:
     return name.replace(namespaces, "")
 
 
-def get_node_path_dict(nodes) -> dict:
+def get_node_path_dict(nodes: List[pm.PyNode]) -> dict:
     path_dict = dict()
     for node in nodes:
         try:
@@ -79,3 +78,13 @@ def get_node_path_dict(nodes) -> dict:
             # non-dag nodes doesn't have a "fullPath" attribute
             pass
     return path_dict
+
+
+def node_dict_to_path_dict(node_dict: dict) -> dict:
+    node_path_data = dict()
+    for k, v in node_dict.items():
+        try:
+            node_path_data[k.fullPath()] = v
+        except AttributeError:
+            node_path_data[k.name()] = v
+    return node_path_data

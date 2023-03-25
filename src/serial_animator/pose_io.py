@@ -1,11 +1,11 @@
-import os
+from pathlib import Path
 import tempfile
 import pymel.core as pm
 from serial_animator.exceptions import SerialAnimatorError
 from serial_animator.file_io import (
     archive_files,
     read_data_from_archive,
-    write_pynode_data_to_json,
+    write_json_data,
 )
 import serial_animator.find_nodes as find_nodes
 
@@ -58,15 +58,28 @@ def get_data_from_nodes(nodes=None) -> dict:
     return data
 
 
-def save_pose_from_selection(path, img_path) -> str:
+def get_path_data_from_nodes(nodes=None) -> dict:
+    """
+    Gets keyable data from nodes and returns them as a node-path-dict
+    with a dict of attribute-names and values
+    """
+    data = get_data_from_nodes(nodes)
+    return find_nodes.node_dict_to_path_dict(data)
+
+
+def save_pose_from_selection(path: Path, img_path: Path) -> Path:
     """
     Saves data for selected nodes to path and archives preview-image
     with it
     """
-    data = get_data_from_nodes()
+    data = get_path_data_from_nodes()
+    return save_data(path, data, img_path)
+
+
+def save_data(path, data: dict, img_path) -> Path:
     with tempfile.TemporaryDirectory(prefix="serial_animator_") as tmp_dir:
-        pose_path = os.path.join(tmp_dir, "pose.json")
-        write_pynode_data_to_json(data, pose_path)
+        pose_path = Path(tmp_dir) / "pose.json"
+        write_json_data(data, pose_path)
         archive = archive_files(files=[pose_path, img_path], out_path=path)
     return archive
 
@@ -78,22 +91,9 @@ def get_keyable_data(node) -> dict:
     return data
 
 
-def get_node_name_dict(nodes, long_name=True) -> dict:
-    if long_name:
-        return {node.longName(): node for node in nodes}
-    else:
-        return {node.stripNamespace(): node for node in nodes}
-
-
-def get_interpolation_dict(data) -> dict:
-    nodes = get_nodes()
-    return find_nodes.search_nodes(data.keys(), nodes)
-
-
-def interpolate(target: dict, origin: dict, weight: int):
+def interpolate(target: dict, origin: dict, weight: float):
     for node, node_data in target.items():
         for attribute_name, value in node_data.items():
-            _logger.debug("looking for {} on {}".format(attribute_name, node))
             if not node.hasAttr(attribute_name):
                 _logger.debug(
                     f"{node} doesn't have the attribute {attribute_name}. Skipping!"
@@ -127,7 +127,7 @@ def read_pose_data(path) -> dict:
 
 def read_pose_data_to_nodes(path, nodes=None) -> dict:
     data = read_pose_data(path)
-    node_dict = find_nodes.search_nodes(data.keys(), nodes)
+    node_dict = find_nodes.search_nodes(list(data.keys()), nodes)
     pose = dict()
     for node_name, node_data in data.items():
         node = node_dict.get(node_name)
