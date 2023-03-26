@@ -27,7 +27,12 @@ def get_nodes() -> [pm.PyNode]:
     nodes = pm.selected() or pm.ls()
     # don't find animation curves as we will get those from nodes connected to them
     nodes = [node for node in nodes if not isinstance(node, pm.nodetypes.AnimCurveTL)]
-    return [node for node in nodes if pm.keyframe(node, q=True, keyframeCount=True) > 0]
+    return [node for node in nodes if has_animation(node)]
+
+
+def has_animation(node):
+    """Tests if node has keyframes"""
+    return pm.keyframe(node, q=True, keyframeCount=True) > 0
 
 
 def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
