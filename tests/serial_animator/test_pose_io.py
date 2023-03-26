@@ -7,10 +7,9 @@ import serial_animator.file_io
 import serial_animator.pose_io as pose_io
 import serial_animator.find_nodes
 
-import serial_animator.log
+from serial_animator import log
 
-_logger = serial_animator.log.log(__name__)
-
+_logger = log.log(__name__)
 
 def test_get_nodes(two_cubes):
     cube1, cube2 = two_cubes

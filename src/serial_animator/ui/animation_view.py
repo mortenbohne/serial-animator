@@ -14,10 +14,9 @@ from serial_animator.ui.file_view import (
 )
 from serial_animator.ui.view_grabber import AnimationViewGrabber
 
-import logging
+from serial_animator import log
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+_logger = log.log(__name__)
 
 
 class AnimationWidget(FilePreviewWidgetBase):

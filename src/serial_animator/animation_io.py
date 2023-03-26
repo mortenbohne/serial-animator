@@ -11,9 +11,9 @@ from serial_animator.file_io import (
 )
 import serial_animator.find_nodes
 
-from . import log
+from serial_animator import log
 
-_logger = serial_animator.log.log(__name__)
+_logger = log.log(__name__)
 
 
 def load_animation(path: Path, nodes=None):

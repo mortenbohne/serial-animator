@@ -4,8 +4,9 @@ import pymel.core as pm
 import serial_animator.animation_io as animation_io
 import logging
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+from serial_animator import log
+
+_logger = log.log(__name__)
 
 
 def test_load_animation(caplog):

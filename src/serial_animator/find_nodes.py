@@ -1,10 +1,10 @@
 """Utilities to find nodes from path-name but in different namespaces"""
 from typing import Generator, Optional, List
-import logging
 import pymel.core as pm
 
-_logger = logging.getLogger(__name__)
+from serial_animator import log
 
+_logger = log.log(__name__)
 
 # _logger.setLevel("DEBUG")
 

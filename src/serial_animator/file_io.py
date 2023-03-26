@@ -3,9 +3,9 @@ from pathlib import Path
 import tarfile
 import json
 
-import serial_animator.log
+from serial_animator import log
 
-_logger = serial_animator.log.log(__name__)
+_logger = log.log(__name__)
 _logger.setLevel("DEBUG")
 
 

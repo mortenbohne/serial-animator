@@ -10,9 +10,9 @@ from serial_animator.ui.file_view import (
 )
 from serial_animator.ui.view_grabber import GeometryViewGrabber
 
-import serial_animator.log
+from serial_animator import log
 
-_logger = serial_animator.log.log(__name__)
+_logger = log.log(__name__)
 
 
 class PoseWidget(FilePreviewWidgetBase):
