@@ -11,6 +11,7 @@ from serial_animator import log
 
 _logger = log.log(__name__)
 
+
 def test_get_nodes(two_cubes):
     cube1, cube2 = two_cubes
     assert cube1 and cube2 in pose_io.get_nodes()
@@ -93,3 +94,13 @@ def pose_file(tmp_path, data_preview, posed_cube):
     path_data = pose_io.get_path_data_from_nodes([posed_cube])
     pose_io.save_data(out_path, path_data, data_preview)
     yield out_path
+
+
+def test_undo(cube):
+    orig_value = cube.tx.get()
+    pose_io.start_undo()
+    cube.tx.set(10)
+    cube.tx.set(20)
+    pose_io.end_undo()
+    pm.undo()
+    assert cube.tx.get() == orig_value

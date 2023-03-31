@@ -24,20 +24,6 @@ class SerialAnimatorSavePoseError(SerialAnimatorPoseLibraryError):
     """Error when saving pose"""
 
 
-class SerialAnimatorNoNodesSelectedError(SerialAnimatorPoseLibraryError):
-    """Error when no nodes are selected"""
-
-    def __init__(self, message="Please select controls"):
-        super(SerialAnimatorNoNodesSelectedError, self).__init__(message)
-
-
-class SerialAnimatorNoNodesSelectedForLoadError(SerialAnimatorNoNodesSelectedError):
-    """Error when no nodes are selected"""
-
-    def __init__(self, message="Please select controls to apply pose to"):
-        super(SerialAnimatorNoNodesSelectedForLoadError, self).__init__(message)
-
-
 def get_nodes() -> list:
     """
     Gets selected nodes. If no nodes are selected, get all scene nodes
