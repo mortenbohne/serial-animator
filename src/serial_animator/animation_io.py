@@ -2,6 +2,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple, Optional, Literal
+from collections import OrderedDict
 
 import pymel.core as pm
 from serial_animator.file_io import (
@@ -24,6 +25,26 @@ class SerialAnimatorKeyError(SerialAnimatorError):
 InfinityType = Literal[
     "constant", "linear", "constant", "cycle", "cycleRelative", "oscillate"
 ]
+InOutTangentType = Literal[
+    "spline",
+    "linear",
+    "fast",
+    "slow",
+    "flat",
+    "step",
+    "stepnext",
+    "fixed",
+    "clamped",
+    "plateau",
+    "auto",
+    "autoease",
+    "automix",
+    "autocustom",
+]
+TangentDataType = Tuple[
+    float, float, float, float, InOutTangentType, InOutTangentType, bool, bool
+]
+KeyDataType = OrderedDict[float, Tuple[float, TangentDataType]]
 
 
 class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
@@ -71,6 +92,26 @@ def get_infinity(attribute: pm.general.Attribute) -> Tuple[InfinityType, Infinit
         raise SerialAnimatorNoKeyError(attribute=attribute)
 
 
+def set_infinity(
+        attribute: pm.general.Attribute,
+        pre_infinity: InfinityType,
+        post_infinity: InfinityType,
+):
+    """
+    Sets the pre- and post-infinity for attribute.
+    States are:
+    "constant", "linear", "constant", "cycle", "cycleRelative", "oscillate".
+
+    Note:
+        Setting infinity on an attribute with no keys has no effect,
+        but doesn't raise
+    :param attribute: attribute with keys
+    :param pre_infinity: string representing infinity-type
+    :param post_infinity: string representing infinity-type
+    """
+    pm.setInfinity(attribute, preInfinite=pre_infinity, postInfinite=post_infinity)
+
+
 def get_weighted_tangents(attribute: pm.general.Attribute) -> bool:
     """
     Checks if keys on an attribute have weighted tangents
@@ -83,6 +124,15 @@ def get_weighted_tangents(attribute: pm.general.Attribute) -> bool:
         return weighted_tangents[0]
     else:
         raise SerialAnimatorNoKeyError(attribute=attribute)
+
+
+def set_weighted_tangents(attribute: pm.general.Attribute, weighted: bool):
+    """
+    Sets weighted tangents for keys on an attribute
+    :param attribute: attribute with keys
+    :param weighted: value to set
+    """
+    pm.keyTangent(attribute, weightedTangents=weighted)
 
 
 def has_animation(node):
@@ -122,15 +172,32 @@ def get_key_data(
         attribute: pm.general.Attribute,
         start: Optional[float] = None,
         end: Optional[float] = None,
-) -> dict:
+) -> KeyDataType:
     """
     Gets the animation-data for an attribute
     :param attribute:
     :param start:
     :param end:
     :return:
+    OrderedDict with key-data:
+    {
+        frame(float): tuple(
+            key-value(float),
+            tangent-data tuple(
+                inAngle (float),
+                outAngle (float),
+                inWeight (float),
+                outWeight (float)
+                inTangentType (str)
+                outTangentType (str)
+                lock (bool)
+                weightLock (bool)
+            )
+        )
+    }
+
     """
-    data = dict()
+    data = OrderedDict()
     time_values = pm.keyframe(
         attribute,
         query=True,
@@ -155,9 +222,58 @@ def get_key_data(
     for i, time_value in enumerate(time_values):
         time, value = time_value
         start_index = i * 8
-        tangent = tangent_values[start_index: start_index + 7]
-        data[float(time)] = [value, tangent]
+        tangent = tuple(tangent_values[start_index: start_index + 8])
+        data[float(time)] = (value, tangent)
     return data
+
+
+def set_key_data(
+        attribute: pm.general.Attribute,
+        data: KeyDataType,
+        start: Optional[float] = None,
+        end: Optional[float] = None,
+):
+    # get range of keys to remove
+    time_values = list(data.keys())
+    min_frame = time_values[0]
+    max_frame = time_values[-1]
+    if start:
+        min_frame = max(start, min_frame)
+    if end:
+        max_frame = min(end, max_frame)
+    # remove existing keys in area we are writing data to
+    pm.cutKey(attribute, time=(min_frame, max_frame), clear=True)
+    for time, key_data in data.items():
+        if start:
+            if time < start:
+                continue
+        if end:
+            if time > end:
+                continue
+        value, tangent_data = key_data
+        pm.keyframe(attribute, time=time, value=value)
+        (
+            in_angle,
+            out_angle,
+            in_weight,
+            out_weight,
+            in_tangent_type,
+            out_tangent_type,
+            lock,
+            weight_lock,
+        ) = tangent_data
+        pm.keyTangent(
+            attribute,
+            time=(time, time),
+            inAngle=in_angle,
+            outAngle=out_angle,
+            inWeight=in_weight,
+            outWeight=out_weight,
+            inTangentType=in_tangent_type,
+            outTangentType=out_tangent_type,
+            lock=lock,
+            weightLock=weight_lock,
+        )
 
 
 def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:

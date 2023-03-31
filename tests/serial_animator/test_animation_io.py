@@ -23,13 +23,13 @@ def test_get_attribute_data(keyed_cube):
     data = animation_io.get_attribute_data(keyed_cube.tx)
     assert data["preInfinity"] == "constant"
     assert data["postInfinity"] == "constant"
-    assert data["weightedTangents"] is False
+    assert data["weightedTangents"] is True
     assert len(data["keys"].keys()) == 2
     pm.setInfinity(keyed_cube.tx, preInfinite="oscillate")
-    pm.keyTangent(keyed_cube.tx, weightedTangents=True)
+    animation_io.set_weighted_tangents(keyed_cube.tx, False)
     new_data = animation_io.get_attribute_data(keyed_cube.tx)
     assert new_data["preInfinity"] == "oscillate"
-    assert new_data["weightedTangents"] is True
+    assert new_data["weightedTangents"] is False
 
 
 def test_get_key_data(keyed_cube):
@@ -38,7 +38,10 @@ def test_get_key_data(keyed_cube):
     key_10_value, key_10_tangent = data[float(10)]
     assert key_0_value == 0.0
     assert key_10_value == 10.0
-    assert key_0_tangent == [0.0, 0.0, 1.0, 1.0, "auto", "auto", True]
+    for i in range(4):
+        pytest.approx(key_0_tangent[i], float(i))
+    assert key_0_tangent[4:] == ("fixed", "fixed", False, False)
+    assert key_10_tangent[4:] == ("flat", "auto", True, False)
     with pytest.raises(KeyError):
         _ = data[float(3)]
     range_data = animation_io.get_key_data(keyed_cube.tx, start=0, end=20)
@@ -50,6 +53,13 @@ def test_get_key_data(keyed_cube):
 def test_get_infinity(keyed_cube):
     with pytest.raises(animation_io.SerialAnimatorNoKeyError):
         animation_io.get_infinity(keyed_cube.ty)
+
+
+def test_set_infinity(keyed_cube):
+    animation_io.set_infinity(
+        keyed_cube.tx, pre_infinity="oscillate", post_infinity="oscillate"
+    )
+    assert animation_io.get_infinity(keyed_cube.tx) == ("oscillate", "oscillate")
 
 
 def test_get_weighted_tangents(keyed_cube):
@@ -91,6 +101,20 @@ def new_scene():
 def keyed_cube():
     cube = pm.polyCube(constructionHistory=False)[0]
     pm.setKeyframe(cube, value=0, time=0, attribute="translateX")
+    pm.keyTangent(cube.tx, weightedTangents=True)
+    pm.keyTangent(
+        cube.tx,
+        time=0,
+        inAngle=0.0,
+        outAngle=1.0,
+        inWeight=2.0,
+        outWeight=3.0,
+        inTangentType="fixed",
+        outTangentType="fixed",
+        lock=False,
+        weightLock=False,
+    )
     pm.setKeyframe(cube, value=10, time=10, attribute="translateX")
+    pm.keyTangent(cube.tx, time=10, inTangentType="flat", outTangentType="auto")
     yield cube
     pm.newFile(force=True)
