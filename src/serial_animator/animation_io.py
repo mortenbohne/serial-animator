@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List
+from typing import List, Tuple, Optional
 
 import pymel.core as pm
 from serial_animator.file_io import (
@@ -12,8 +12,27 @@ from serial_animator.file_io import (
 import serial_animator.find_nodes
 
 from serial_animator import log
+from serial_animator.exceptions import SerialAnimatorError
 
 _logger = log.log(__name__)
+
+
+class SerialAnimatorKeyError(SerialAnimatorError):
+    pass
+
+
+class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
+    def __init__(
+            self,
+            message: Optional[str] = None,
+            attribute: Optional[pm.general.Attribute] = None,
+    ):
+        if not message:
+            if attribute:
+                message = f"Attribute: {attribute} has no keys!"
+            else:
+                message = "Attribute has no keys!"
+        super().__init__(message)
 
 
 def load_animation(path: Path, nodes=None):
@@ -30,9 +49,50 @@ def get_nodes() -> [pm.PyNode]:
     return [node for node in nodes if has_animation(node)]
 
 
+def get_infinity(attribute: pm.general.Attribute) -> Tuple[str, str]:
+    """
+    Gets the pre- and post-infinity for attribute.
+    States are:
+    "constant", "linear", "constant", "cycle", "cycleRelative", "oscillate",
+    :param attribute: attribute with keys
+    :raises: SerialAnimatorNoKeyError
+    :return: pre-infinity, post-infinity
+    """
+    res = pm.setInfinity(attribute, preInfinite=True, postInfinite=True, query=True)
+    if res:
+        return tuple(res)
+    else:
+        raise SerialAnimatorNoKeyError(attribute=attribute)
+
+
+def get_weighted_tangents(attribute: pm.general.Attribute) -> bool:
+    """
+    Checks if keys on an attribute have weighted tangents
+    :param attribute: attribute with keys
+    :raises: SerialAnimatorNoKeyError
+    :return: True if keys have weighted tangents, false if not.
+    """
+    weighted_tangents = pm.keyTangent(attribute, weightedTangents=True, query=True)
+    if weighted_tangents:
+        return weighted_tangents[0]
+    else:
+        raise SerialAnimatorNoKeyError(attribute=attribute)
+
+
 def has_animation(node):
     """Tests if node has keyframes"""
     return pm.keyframe(node, q=True, keyframeCount=True) > 0
+
+
+def get_attribute_data(
+        attribute, start: Optional[float] = None, end: Optional[float] = None
+):
+    data = dict()
+    pre_infinity, post_infinity = get_infinity(attribute)
+    data["preInfinity"] = pre_infinity
+    data["postInfinity"] = post_infinity
+    data["weightedTangents"] = get_weighted_tangents(attribute)
+    return data
 
 
 def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:

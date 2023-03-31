@@ -6,7 +6,36 @@ import logging
 
 from serial_animator import log
 
-_logger = log.log(__name__)
+logger = log.log(__name__)
+
+
+def test_get_attribute_data(keyed_cube):
+    data = animation_io.get_attribute_data(keyed_cube.tx)
+    assert data == {
+        "preInfinity": "constant",
+        "postInfinity": "constant",
+        "weightedTangents": False,
+    }
+    pm.setInfinity(keyed_cube.tx, preInfinite="oscillate")
+    pm.keyTangent(keyed_cube.tx, weightedTangents=True)
+    new_data = animation_io.get_attribute_data(keyed_cube.tx)
+    assert new_data["preInfinity"] == "oscillate"
+    assert new_data["weightedTangents"] is True
+
+
+def test_get_infinity(keyed_cube):
+    with pytest.raises(animation_io.SerialAnimatorNoKeyError):
+        animation_io.get_infinity(keyed_cube.ty)
+
+
+def test_get_weighted_tangents(keyed_cube):
+    with pytest.raises(animation_io.SerialAnimatorNoKeyError):
+        animation_io.get_weighted_tangents(keyed_cube.ty)
+
+
+def test_SerialAnimatorNoKeyError():
+    with pytest.raises(animation_io.SerialAnimatorKeyError):
+        raise animation_io.SerialAnimatorNoKeyError()
 
 
 def test_load_animation(caplog):
