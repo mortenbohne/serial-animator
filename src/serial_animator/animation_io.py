@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Literal
 
 import pymel.core as pm
 from serial_animator.file_io import (
@@ -19,6 +19,11 @@ _logger = log.log(__name__)
 
 class SerialAnimatorKeyError(SerialAnimatorError):
     pass
+
+
+InfinityType = Literal[
+    "constant", "linear", "constant", "cycle", "cycleRelative", "oscillate"
+]
 
 
 class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
@@ -41,7 +46,8 @@ def load_animation(path: Path, nodes=None):
 
 def get_nodes() -> [pm.PyNode]:
     """
-    Gets selected nodes. If no nodes are selected, get all scene nodes
+    Gets animated nodes either from selection or if nothing is selected,
+    from all scene nodes
     """
     nodes = pm.selected() or pm.ls()
     # don't find animation curves as we will get those from nodes connected to them
@@ -49,7 +55,7 @@ def get_nodes() -> [pm.PyNode]:
     return [node for node in nodes if has_animation(node)]
 
 
-def get_infinity(attribute: pm.general.Attribute) -> Tuple[str, str]:
+def get_infinity(attribute: pm.general.Attribute) -> Tuple[InfinityType, InfinityType]:
     """
     Gets the pre- and post-infinity for attribute.
     States are:
@@ -84,14 +90,73 @@ def has_animation(node):
     return pm.keyframe(node, q=True, keyframeCount=True) > 0
 
 
+def get_node_data(node, start: Optional[float] = None, end: Optional[float] = None):
+    data = dict()
+    for attribute, _ in node.inputs(
+            plugs=True, connections=True, type=pm.nodetypes.AnimCurveTL
+    ):
+        # todo: if node have keys out of range, should keyframes be inserted at start, end?
+        # nodes might have keyframes out of range of start, end
+        attribute_data = get_attribute_data(attribute=attribute, start=start, end=end)
+        if attribute_data["keys"]:
+            data[attribute] = attribute_data
+    return data
+
+
 def get_attribute_data(
-        attribute, start: Optional[float] = None, end: Optional[float] = None
+        attribute: pm.general.Attribute,
+        start: Optional[float] = None,
+        end: Optional[float] = None,
 ):
     data = dict()
     pre_infinity, post_infinity = get_infinity(attribute)
     data["preInfinity"] = pre_infinity
     data["postInfinity"] = post_infinity
     data["weightedTangents"] = get_weighted_tangents(attribute)
+    data["keys"] = get_key_data(attribute, start, end)
+
+    return data
+
+
+def get_key_data(
+        attribute: pm.general.Attribute,
+        start: Optional[float] = None,
+        end: Optional[float] = None,
+) -> dict:
+    """
+    Gets the animation-data for an attribute
+    :param attribute:
+    :param start:
+    :param end:
+    :return:
+    """
+    data = dict()
+    time_values = pm.keyframe(
+        attribute,
+        query=True,
+        time=(start, end),
+        absolute=True,
+        timeChange=True,
+        valueChange=True,
+    )
+    tangent_values = pm.keyTangent(
+        attribute,
+        query=True,
+        time=(start, end),
+        inAngle=True,
+        outAngle=True,
+        inWeight=True,
+        outWeight=True,
+        inTangentType=True,
+        outTangentType=True,
+        lock=True,
+        weightLock=True,
+    )
+    for i, time_value in enumerate(time_values):
+        time, value = time_value
+        start_index = i * 8
+        tangent = tangent_values[start_index: start_index + 7]
+        data[float(time)] = [value, tangent]
     return data
 
 
@@ -170,11 +235,12 @@ def get_meta_data(nodes=None, frame_range=None) -> dict:
 
 
 def get_anim_data(nodes=None, frame_range=None) -> dict:
+    # todo: support animation layers
     nodes = nodes or get_nodes()
-    frame_range = frame_range or get_frame_range()
+    start, end = frame_range or get_frame_range()
     data = dict()
     for node in nodes:
-        data[node] = dict()
+        data[node] = get_node_data(node, start=start, end=end)
     return data
 
 
