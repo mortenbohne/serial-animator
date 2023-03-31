@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Optional, Literal
+from typing import List, Tuple, Optional, Literal, Dict
 from collections import OrderedDict
 
 import pymel.core as pm
@@ -157,7 +157,14 @@ def get_attribute_data(
         attribute: pm.general.Attribute,
         start: Optional[float] = None,
         end: Optional[float] = None,
-):
+) -> dict:
+    """
+    Gets key-data for attribute
+    :param attribute:
+    :param start:
+    :param end:
+    :return:
+    """
     data = dict()
     pre_infinity, post_infinity = get_infinity(attribute)
     data["preInfinity"] = pre_infinity
@@ -233,6 +240,13 @@ def set_key_data(
         start: Optional[float] = None,
         end: Optional[float] = None,
 ):
+    """
+    Removes existing keyframes in time-range and create new keys based on data
+    :param attribute: attribute to set keys on
+    :param data: data to create keyframes from
+    :param start: ignore data before start
+    :param end: ignore data after end
+    """
     # get range of keys to remove
     time_values = list(data.keys())
     min_frame = time_values[0]
@@ -252,28 +266,35 @@ def set_key_data(
                 continue
         value, tangent_data = key_data
         pm.keyframe(attribute, time=time, value=value)
-        (
-            in_angle,
-            out_angle,
-            in_weight,
-            out_weight,
-            in_tangent_type,
-            out_tangent_type,
-            lock,
-            weight_lock,
-        ) = tangent_data
-        pm.keyTangent(
-            attribute,
-            time=(time, time),
-            inAngle=in_angle,
-            outAngle=out_angle,
-            inWeight=in_weight,
-            outWeight=out_weight,
-            inTangentType=in_tangent_type,
-            outTangentType=out_tangent_type,
-            lock=lock,
-            weightLock=weight_lock,
-        )
+        set_tangent(attribute, time=time, tangent_data=tangent_data)
+
+
+def set_tangent(
+        attribute: pm.general.Attribute, time: float, tangent_data: TangentDataType
+):
+    """Sets tangent-data for keyframe at time"""
+    (
+        in_angle,
+        out_angle,
+        in_weight,
+        out_weight,
+        in_tangent_type,
+        out_tangent_type,
+        lock,
+        weight_lock,
+    ) = tangent_data
+    pm.keyTangent(
+        attribute,
+        time=time,
+        inAngle=in_angle,
+        outAngle=out_angle,
+        inWeight=in_weight,
+        outWeight=out_weight,
+        inTangentType=in_tangent_type,
+        outTangentType=out_tangent_type,
+        lock=lock,
+        weightLock=weight_lock,
+    )
 
 
 def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
