@@ -50,7 +50,7 @@ def test_strip_all_namespaces(cube, namespaced_cube, caplog):
 
 def test_get_node_path_dict(two_cubes, time_node):
     assert isinstance(find_nodes.get_node_path_dict(two_cubes), dict)
-    assert find_nodes.get_node_path_dict([time_node]) == dict()
+    assert find_nodes.get_node_path_dict([time_node]) == dict({"time1": time_node})
 
 
 @pytest.fixture()

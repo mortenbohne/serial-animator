@@ -99,7 +99,7 @@ def get_node_data(node, start: Optional[float] = None, end: Optional[float] = No
         # nodes might have keyframes out of range of start, end
         attribute_data = get_attribute_data(attribute=attribute, start=start, end=end)
         if attribute_data["keys"]:
-            data[attribute] = attribute_data
+            data[attribute.shortName()] = attribute_data
     return data
 
 
@@ -224,10 +224,7 @@ def get_meta_data(nodes=None, frame_range=None) -> dict:
     data = dict()
     node_names = list()
     for node in nodes:
-        try:
-            node_names.append(node.fullPath())
-        except AttributeError:
-            node_names.append(node.name())
+        node_names.append(serial_animator.find_nodes.get_node_path(node))
     data["nodes"] = node_names
     data["frame_range"] = frame_range
     data["time_unit"] = get_time_unit()

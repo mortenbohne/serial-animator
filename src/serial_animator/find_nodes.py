@@ -72,19 +72,19 @@ def strip_all_namespaces(name: str) -> Optional[str]:
 def get_node_path_dict(nodes: List[pm.PyNode]) -> dict:
     path_dict = dict()
     for node in nodes:
-        try:
-            path_dict[node.fullPath()] = node
-        except AttributeError:
-            # non-dag nodes doesn't have a "fullPath" attribute
-            pass
+        path_dict[get_node_path(node)] = node
     return path_dict
 
 
 def node_dict_to_path_dict(node_dict: dict) -> dict:
     node_path_data = dict()
     for k, v in node_dict.items():
-        try:
-            node_path_data[k.fullPath()] = v
-        except AttributeError:
-            node_path_data[k.name()] = v
+        node_path_data[get_node_path(k)] = v
     return node_path_data
+
+
+def get_node_path(node):
+    try:
+        return node.fullPath()
+    except AttributeError:
+        return node.name()
