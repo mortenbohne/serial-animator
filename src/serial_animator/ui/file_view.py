@@ -204,7 +204,8 @@ class TabWidget(QtWidgets.QTabWidget):
     def add_tab(self, path) -> FileWidgetHolderBase:
         return self.DataHolderWidget(path=path)
 
-    def dir_changed(self, path):
+    def dir_changed(self, path: str):
+        path = Path(path)
         tab_dict = dict()
 
         tabs = [self.widget(i) for i in range(self.count())]
