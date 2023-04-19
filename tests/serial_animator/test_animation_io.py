@@ -84,6 +84,20 @@ def test_load_animation(caplog, keyed_cube, preview_sequence, tmp_path):
         assert "Applying" in caplog.text
 
 
+def test_set_node_data(caplog, keyed_cube):
+    data = animation_io.get_node_data(keyed_cube)
+    pm.delete(keyed_cube)
+    new_cube = pm.polyCube()[0]
+    with caplog.at_level(logging.DEBUG):
+        animation_io.set_node_data(new_cube, data)
+        assert "Adding attribute" in caplog.text
+    pm.delete(new_cube)
+    new_cube = pm.polyCube()[0]
+    new_cube.addAttr("my_custom_attribute", attributeType="bool", keyable=True)
+    with pytest.raises(animation_io.SerialAnimatorAttributeMismatchError):
+        animation_io.set_node_data(new_cube, data)
+
+
 def test_get_nodes(keyed_cube, cube):
     pm.select(cube)
     assert len(animation_io.get_nodes()) == 0
@@ -98,11 +112,12 @@ def test_save_animation_from_selection(tmp_path, preview_sequence, keyed_cube):
     assert result.is_file()
 
 
-
 @pytest.fixture()
 def keyed_cube():
     cube = pm.polyCube(constructionHistory=False)[0]
+    cube.addAttr("my_custom_attribute", attributeType="long", keyable=True)
     pm.setKeyframe(cube, value=0, time=0, attribute="translateX")
+    pm.setKeyframe(cube, value=1, time=0, attribute="my_custom_attribute")
     pm.keyTangent(cube.tx, weightedTangents=True)
     pm.keyTangent(
         cube.tx,
