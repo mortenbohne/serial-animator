@@ -94,7 +94,7 @@ def get_nodes() -> [pm.PyNode]:
     """
     nodes = pm.selected() or pm.ls()
     # don't find animation curves as we will get those from nodes connected to them
-    nodes = [node for node in nodes if not isinstance(node, pm.nodetypes.AnimCurveTL)]
+    nodes = [node for node in nodes if not isinstance(node, pm.nodetypes.AnimCurve)]
     return [node for node in nodes if has_animation(node)]
 
 
