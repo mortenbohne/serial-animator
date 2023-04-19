@@ -168,6 +168,7 @@ def set_node_data(
     for attribute_name, attribute_data in data.items():
         input_type = attribute_data.get("attributeType")
         if not hasattr(node, attribute_name):
+            _logger.debug(f"{node}.{attribute_name} doesn't exist. Adding attribute")
             node.addAttr(attribute_name, attributeType=input_type, keyable=True)
         attribute = node.attr(attribute_name)
         attribute_type = attribute.type()
@@ -181,7 +182,7 @@ def set_node_data(
 def get_node_data(node, start: Optional[float] = None, end: Optional[float] = None):
     data = dict()
     for attribute, _ in node.inputs(
-            plugs=True, connections=True, type=pm.nodetypes.AnimCurveTL
+            plugs=True, connections=True, type=pm.nodetypes.AnimCurve
     ):
         # todo: if node have keys out of range, should keyframes be inserted at start, end?
         # nodes might have keyframes out of range of start, end
