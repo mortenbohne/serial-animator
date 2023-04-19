@@ -72,13 +72,19 @@ def test_SerialAnimatorNoKeyError():
         raise animation_io.SerialAnimatorNoKeyError()
 
 
-def test_load_animation(caplog):
+def test_load_animation(caplog, keyed_cube, preview_sequence, tmp_path):
+    data_path = tmp_path / "keyed_cube.anim"
+    pm.select(keyed_cube)
+    animation_io.save_animation_from_selection(data_path, preview_sequence)
+    pm.newFile(force=True)
+    cube = pm.polyCube(constructionHistory=False)[0]
+
     with caplog.at_level(logging.DEBUG):
-        animation_io.load_animation(path=Path())
+        animation_io.load_animation(path=data_path, nodes=[cube])
         assert "Applying" in caplog.text
 
 
-def test_get_nodes(new_scene, keyed_cube, cube):
+def test_get_nodes(keyed_cube, cube):
     pm.select(cube)
     assert len(animation_io.get_nodes()) == 0
     pm.select(None)
@@ -91,10 +97,6 @@ def test_save_animation_from_selection(tmp_path, preview_sequence, keyed_cube):
     result = animation_io.save_animation_from_selection(out_path, preview_sequence)
     assert result.is_file()
 
-
-@pytest.fixture()
-def new_scene():
-    pm.newFile(force=True)
 
 
 @pytest.fixture()
@@ -117,4 +119,3 @@ def keyed_cube():
     pm.setKeyframe(cube, value=10, time=10, attribute="translateX")
     pm.keyTangent(cube.tx, time=10, inTangentType="flat", outTangentType="auto")
     yield cube
-    pm.newFile(force=True)

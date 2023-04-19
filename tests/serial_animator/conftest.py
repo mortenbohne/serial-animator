@@ -46,7 +46,6 @@ def cube_keyable_data(scope="function"):
 def cube():
     cube = pm.polyCube(constructionHistory=False)[0]
     yield cube
-    pm.newFile(force=True)
 
 
 @pytest.fixture()
@@ -54,4 +53,8 @@ def two_cubes():
     cube1 = pm.polyCube(constructionHistory=False)[0]
     cube2 = pm.polyCube(constructionHistory=False)[0]
     yield [cube1, cube2]
+
+
+@pytest.fixture(autouse=True)
+def new_file():
     pm.newFile(force=True)
