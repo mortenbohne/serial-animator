@@ -7,10 +7,6 @@ import serial_animator.file_io
 import serial_animator.pose_io as pose_io
 import serial_animator.find_nodes
 
-from serial_animator import log
-
-_logger = log.log(__name__)
-
 
 def test_get_nodes(two_cubes):
     cube1, cube2 = two_cubes
@@ -61,7 +57,6 @@ def test_interpolate(pose_file, cube_keyable_data, caplog):
     start_pose = pose_io.get_data_from_nodes([cube])
     target_pose = pose_io.read_pose_data_to_nodes(pose_file, [cube])
     target_pose[cube]["non_existent_attribute"] = 1.0
-    _logger.info(target_pose)
     cube.tx.lock()
     with caplog.at_level(logging.DEBUG):
         pose_io.interpolate(target=target_pose, origin=start_pose, weight=0.1)
