@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import List, Tuple, Optional, Literal, Dict
 from collections import OrderedDict
 
+import serial_animator.find_nodes as find_nodes
+
 import pymel.core as pm
 from serial_animator.file_io import (
     write_json_data,
@@ -19,6 +21,14 @@ _logger = log.log(__name__)
 
 
 class SerialAnimatorKeyError(SerialAnimatorError):
+    pass
+
+
+class SerialAnimatorLoadDataError(SerialAnimatorError):
+    pass
+
+
+class SerialAnimatorAttributeMismatchError(SerialAnimatorLoadDataError):
     pass
 
 
@@ -61,8 +71,20 @@ class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
         super().__init__(message)
 
 
-def load_animation(path: Path, nodes=None):
+def load_animation(
+        path: Path, nodes=None, start: Optional[float] = None, end: Optional[float] = None
+):
     _logger.debug(f"Applying animation from {path} to {nodes}")
+    data = read_animation_data(path)
+    node_dict = find_nodes.search_nodes(list(data.keys()), nodes)
+    for node_name, node_data in data.items():
+        node = node_dict.get(node_name)
+        if node:
+            set_node_data(node, data[node_name], start, end)
+
+
+def read_animation_data(path: Path) -> dict:
+    return read_data_from_archive(path, json_name="anim_data.json")
 
 
 def get_nodes() -> [pm.PyNode]:
@@ -140,6 +162,22 @@ def has_animation(node):
     return pm.keyframe(node, q=True, keyframeCount=True) > 0
 
 
+def set_node_data(
+        node, data, start: Optional[float] = None, end: Optional[float] = None
+):
+    for attribute_name, attribute_data in data.items():
+        input_type = attribute_data.get("attributeType")
+        if not hasattr(node, attribute_name):
+            node.addAttr(attribute_name, attributeType=input_type, keyable=True)
+        attribute = node.attr(attribute_name)
+        attribute_type = attribute.type()
+        if input_type != attribute_type:
+            raise SerialAnimatorAttributeMismatchError(
+                f"Error loading animation. {node}.{attribute_name} of type {attribute_type} "
+                f"doesn't match input type {input_type}"
+            )
+
+
 def get_node_data(node, start: Optional[float] = None, end: Optional[float] = None):
     data = dict()
     for attribute, _ in node.inputs(
@@ -167,6 +205,7 @@ def get_attribute_data(
     """
     data = dict()
     pre_infinity, post_infinity = get_infinity(attribute)
+    data["attributeType"] = attribute.type()
     data["preInfinity"] = pre_infinity
     data["postInfinity"] = post_infinity
     data["weightedTangents"] = get_weighted_tangents(attribute)
