@@ -8,7 +8,7 @@ import serial_animator.utils as utils
 import logging
 
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+# _logger.setLevel(logging.DEBUG)
 
 
 def test_get_user_preference_dir():

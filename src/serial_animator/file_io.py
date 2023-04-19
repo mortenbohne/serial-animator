@@ -6,7 +6,7 @@ import json
 from serial_animator import log
 
 _logger = log.log(__name__)
-_logger.setLevel("DEBUG")
+# _logger.setLevel("DEBUG")
 
 
 def archive_files(files: List[Path], out_path: Path, compression="") -> Path:
