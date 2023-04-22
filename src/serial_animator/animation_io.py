@@ -74,7 +74,6 @@ class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
 def load_animation(
         path: Path, nodes=None, start: Optional[float] = None, end: Optional[float] = None
 ):
-    _logger.debug(f"Applying animation from {path} to {nodes}")
     data = read_animation_data(path)
     node_dict = find_nodes.search_nodes(list(data.keys()), nodes)
     for node_name, node_data in data.items():
@@ -154,6 +153,7 @@ def set_weighted_tangents(attribute: pm.general.Attribute, weighted: bool):
     :param attribute: attribute with keys
     :param weighted: value to set
     """
+    _logger.info(f"setting weight: {attribute}: {weighted}")
     pm.keyTangent(attribute, weightedTangents=weighted)
 
 
@@ -177,6 +177,15 @@ def set_node_data(
                 f"Error loading animation. {node}.{attribute_name} of type {attribute_type} "
                 f"doesn't match input type {input_type}"
             )
+        set_weighted_tangents(attribute, attribute_data.get("weightedTangents"))
+        set_infinity(
+            attribute=attribute,
+            pre_infinity=attribute_data.get("preInfinity"),
+            post_infinity=attribute_data.get("preInfinity"),
+        )
+        set_key_data(
+            attribute=attribute, data=attribute_data.get("keys"), start=start, end=end
+        )
 
 
 def get_node_data(node, start: Optional[float] = None, end: Optional[float] = None):
@@ -289,8 +298,8 @@ def set_key_data(
     """
     # get range of keys to remove
     time_values = list(data.keys())
-    min_frame = time_values[0]
-    max_frame = time_values[-1]
+    min_frame = float(time_values[0])
+    max_frame = float(time_values[-1])
     if start:
         min_frame = max(start, min_frame)
     if end:
@@ -305,8 +314,8 @@ def set_key_data(
             if time > end:
                 continue
         value, tangent_data = key_data
-        pm.keyframe(attribute, time=time, value=value)
-        set_tangent(attribute, time=time, tangent_data=tangent_data)
+        pm.setKeyframe(attribute, time=time, value=value)
+        # set_tangent(attribute, time=time, tangent_data=tangent_data)
 
 
 def set_tangent(
@@ -323,6 +332,9 @@ def set_tangent(
         lock,
         weight_lock,
     ) = tangent_data
+    # _logger.info(attribute)
+    # _logger.info(time)
+    # _logger.info(tangent_data)
     pm.keyTangent(
         attribute,
         time=time,
