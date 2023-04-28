@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Optional, Literal, Dict
+from typing import List, Tuple, Optional, Literal, Dict, Iterable
 from collections import OrderedDict
 
 import serial_animator.find_nodes as find_nodes
@@ -12,12 +12,15 @@ from serial_animator.file_io import (
     archive_files,
     read_data_from_archive,
 )
+from serial_animator.utils import Undo
 import serial_animator.find_nodes
+
 
 from serial_animator import log
 from serial_animator.exceptions import SerialAnimatorError
 
 _logger = log.log(__name__)
+_logger.setLevel("DEBUG")
 
 
 class SerialAnimatorKeyError(SerialAnimatorError):
@@ -71,6 +74,7 @@ class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
         super().__init__(message)
 
 
+@Undo(name="Serial-Animator: Load Animation")
 def load_animation(
         path: Path, nodes=None, start: Optional[float] = None, end: Optional[float] = None
 ):
@@ -86,7 +90,7 @@ def read_animation_data(path: Path) -> dict:
     return read_data_from_archive(path, json_name="anim_data.json")
 
 
-def get_nodes() -> [pm.PyNode]:
+def get_nodes_with_animation() -> [pm.PyNode]:
     """
     Gets animated nodes either from selection or if nothing is selected,
     from all scene nodes
@@ -95,6 +99,10 @@ def get_nodes() -> [pm.PyNode]:
     # don't find animation curves as we will get those from nodes connected to them
     nodes = [node for node in nodes if not isinstance(node, pm.nodetypes.AnimCurve)]
     return [node for node in nodes if has_animation(node)]
+
+
+def get_selection() -> List[pm.PyNode]:
+    return pm.selected()
 
 
 def get_infinity(attribute: pm.general.Attribute) -> Tuple[InfinityType, InfinityType]:
@@ -147,13 +155,21 @@ def get_weighted_tangents(attribute: pm.general.Attribute) -> bool:
         raise SerialAnimatorNoKeyError(attribute=attribute)
 
 
-def set_weighted_tangents(attribute: pm.general.Attribute, weighted: bool):
+def get_weighted_tangent_value_to_apply(
+        attribute: pm.general.Attribute, input_value: bool
+):
+    if input_value is True:
+        return input_value
+    existing_value = pm.keyTangent(attribute, weightedTangents=True, query=True)
+    if existing_value is True:
+        return existing_value
+    return input_value
+
+
+def set_weighted_tangents(attribute: pm.general.Attribute, weighted: bool) -> bool:
     """
     Sets weighted tangents for keys on an attribute
-    :param attribute: attribute with keys
-    :param weighted: value to set
     """
-    _logger.info(f"setting weight: {attribute}: {weighted}")
     pm.keyTangent(attribute, weightedTangents=weighted)
 
 
@@ -177,15 +193,44 @@ def set_node_data(
                 f"Error loading animation. {node}.{attribute_name} of type {attribute_type} "
                 f"doesn't match input type {input_type}"
             )
-        set_weighted_tangents(attribute, attribute_data.get("weightedTangents"))
+        key_data = attribute_data.get("keys")
+        remove_existing_keys(attribute, key_data, start=start, end=end)
+        weighted_tangents = get_weighted_tangent_value_to_apply(
+            attribute=attribute, input_value=attribute_data.get("weightedTangents")
+        )
+        w = pm.keyTangent(attribute, query=True, weightedTangents=True)
+        _logger.debug(f"current state of weighted tangents: {w}")
         set_infinity(
             attribute=attribute,
             pre_infinity=attribute_data.get("preInfinity"),
             post_infinity=attribute_data.get("preInfinity"),
         )
+
         set_key_data(
-            attribute=attribute, data=attribute_data.get("keys"), start=start, end=end
+            attribute=attribute,
+            data=key_data,
+            start=start,
+            end=end,
+            weighted_tangents=weighted_tangents,
         )
+
+
+def remove_existing_keys(
+        attribute,
+        key_data,
+        start: Optional[float] = None,
+        end: Optional[float] = None,
+):
+    # get range of keys to remove
+    time_values = list(key_data)
+    min_frame = float(time_values[0])
+    max_frame = float(time_values[-1])
+    if start:
+        min_frame = max(start, min_frame)
+    if end:
+        max_frame = min(end, max_frame)
+    # remove existing keys in area we are writing data to
+    pm.cutKey(attribute, time=(min_frame, max_frame), clear=True)
 
 
 def get_node_data(node, start: Optional[float] = None, end: Optional[float] = None):
@@ -288,6 +333,7 @@ def set_key_data(
         data: KeyDataType,
         start: Optional[float] = None,
         end: Optional[float] = None,
+        weighted_tangents: Optional[bool] = True,
 ):
     """
     Removes existing keyframes in time-range and create new keys based on data
@@ -295,17 +341,14 @@ def set_key_data(
     :param data: data to create keyframes from
     :param start: ignore data before start
     :param end: ignore data after end
+    :param weighted_tangents: If False, Maya will not be able to set lock-state of tangents
     """
-    # get range of keys to remove
-    time_values = list(data.keys())
-    min_frame = float(time_values[0])
-    max_frame = float(time_values[-1])
-    if start:
-        min_frame = max(start, min_frame)
-    if end:
-        max_frame = min(end, max_frame)
-    # remove existing keys in area we are writing data to
-    pm.cutKey(attribute, time=(min_frame, max_frame), clear=True)
+    should_change_curve_weight = False
+    # if we are trying to set weighted tangents, we need to ensure that
+    # the curve has that set. In order to do that, the curve must have keys
+    if weighted_tangents is True:
+        if pm.keyTangent(attribute, weightedTangents=True, query=True) is not True:
+            should_change_curve_weight = True
     for time, key_data in data.items():
         if start:
             if time < start:
@@ -315,13 +358,27 @@ def set_key_data(
                 continue
         value, tangent_data = key_data
         pm.setKeyframe(attribute, time=time, value=value)
-        # set_tangent(attribute, time=time, tangent_data=tangent_data)
+        if should_change_curve_weight:
+            # this is not settable before curve has keys!
+            set_weighted_tangents(attribute=attribute, weighted=weighted_tangents)
+            should_change_curve_weight = False
+        set_tangent(
+            attribute,
+            time=time,
+            tangent_data=tangent_data,
+            curve_weights=weighted_tangents,
+        )
 
 
 def set_tangent(
-        attribute: pm.general.Attribute, time: float, tangent_data: TangentDataType
+        attribute: pm.general.Attribute,
+        time: float,
+        tangent_data: TangentDataType,
+        curve_weights: Optional[bool] = True,
 ):
     """Sets tangent-data for keyframe at time"""
+    _logger.debug(curve_weights)
+    _logger.debug(get_weighted_tangents(attribute))
     (
         in_angle,
         out_angle,
@@ -332,21 +389,31 @@ def set_tangent(
         lock,
         weight_lock,
     ) = tangent_data
-    # _logger.info(attribute)
-    # _logger.info(time)
-    # _logger.info(tangent_data)
-    pm.keyTangent(
-        attribute,
-        time=time,
-        inAngle=in_angle,
-        outAngle=out_angle,
-        inWeight=in_weight,
-        outWeight=out_weight,
-        inTangentType=in_tangent_type,
-        outTangentType=out_tangent_type,
-        lock=lock,
-        weightLock=weight_lock,
-    )
+    if curve_weights is True:
+        pm.keyTangent(
+            attribute,
+            time=time,
+            inAngle=in_angle,
+            outAngle=out_angle,
+            inWeight=in_weight,
+            outWeight=out_weight,
+            inTangentType=in_tangent_type,
+            outTangentType=out_tangent_type,
+            lock=lock,
+            weightLock=weight_lock,
+        )
+    else:
+        pm.keyTangent(
+            attribute,
+            time=time,
+            inAngle=in_angle,
+            outAngle=out_angle,
+            inWeight=in_weight,
+            outWeight=out_weight,
+            inTangentType=in_tangent_type,
+            outTangentType=out_tangent_type,
+            lock=lock,
+        )
 
 
 def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
@@ -354,7 +421,7 @@ def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
     Saves data for selected nodes to path and archives preview-image
     with it
     """
-    nodes = get_nodes()
+    nodes = get_nodes_with_animation()
     frame_range = get_frame_range()
     anim_data = get_anim_data(nodes=nodes, frame_range=frame_range)
     meta_data = get_meta_data(nodes=nodes, frame_range=frame_range)
@@ -404,11 +471,11 @@ def get_frame_range() -> [int, int]:
 
 
 def get_time_unit() -> float:
+    """Gets current time unit in fps"""
     return pm.mel.eval("currentTimeUnitToFPS")
 
 
-def get_meta_data(nodes=None, frame_range=None) -> dict:
-    nodes = nodes or get_nodes()
+def get_meta_data(nodes: Iterable, frame_range=None) -> dict:
     frame_range = frame_range or get_frame_range()
     data = dict()
     node_names = list()
@@ -420,9 +487,8 @@ def get_meta_data(nodes=None, frame_range=None) -> dict:
     return data
 
 
-def get_anim_data(nodes=None, frame_range=None) -> dict:
+def get_anim_data(nodes: Iterable, frame_range=None) -> dict:
     # todo: support animation layers
-    nodes = nodes or get_nodes()
     start, end = frame_range or get_frame_range()
     data = dict()
     for node in nodes:
