@@ -198,8 +198,6 @@ def set_node_data(
         weighted_tangents = get_weighted_tangent_value_to_apply(
             attribute=attribute, input_value=attribute_data.get("weightedTangents")
         )
-        w = pm.keyTangent(attribute, query=True, weightedTangents=True)
-        _logger.debug(f"current state of weighted tangents: {w}")
         set_infinity(
             attribute=attribute,
             pre_infinity=attribute_data.get("preInfinity"),
@@ -377,8 +375,6 @@ def set_tangent(
         curve_weights: Optional[bool] = True,
 ):
     """Sets tangent-data for keyframe at time"""
-    _logger.debug(curve_weights)
-    _logger.debug(get_weighted_tangents(attribute))
     (
         in_angle,
         out_angle,
@@ -389,14 +385,17 @@ def set_tangent(
         lock,
         weight_lock,
     ) = tangent_data
+    pm.keyTangent(
+        attribute,
+        time=time,
+        inAngle=in_angle,
+        outAngle=out_angle,
+        inWeight=in_weight,
+        outWeight=out_weight)
     if curve_weights is True:
         pm.keyTangent(
             attribute,
             time=time,
-            inAngle=in_angle,
-            outAngle=out_angle,
-            inWeight=in_weight,
-            outWeight=out_weight,
             inTangentType=in_tangent_type,
             outTangentType=out_tangent_type,
             lock=lock,
@@ -406,10 +405,6 @@ def set_tangent(
         pm.keyTangent(
             attribute,
             time=time,
-            inAngle=in_angle,
-            outAngle=out_angle,
-            inWeight=in_weight,
-            outWeight=out_weight,
             inTangentType=in_tangent_type,
             outTangentType=out_tangent_type,
             lock=lock,

@@ -87,16 +87,16 @@ def test_set_node_data(caplog, keyed_cube):
     data = animation_io.get_node_data(keyed_cube)
     pm.newFile(force=True)
     new_cube = pm.polyCube(constructionHistory=False)[0]
-    # with caplog.at_level(logging.DEBUG):
-    #     animation_io.set_node_data(new_cube, data)
-    #     assert "Adding attribute" in caplog.text
-    # pm.delete(new_cube)
-    # new_cube = pm.polyCube()[0]
-    # new_cube.addAttr("my_custom_attribute", attributeType="bool", keyable=True)
-    # with pytest.raises(animation_io.SerialAnimatorAttributeMismatchError):
-    #     animation_io.set_node_data(new_cube, data)
-    # applied_data = animation_io.get_node_data(new_cube)
-    # assert applied_data == data
+    with caplog.at_level(logging.DEBUG):
+        animation_io.set_node_data(new_cube, data)
+        assert "Adding attribute" in caplog.text
+    applied_data = animation_io.get_node_data(new_cube)
+    assert applied_data == data
+    pm.delete(new_cube)
+    new_cube = pm.polyCube()[0]
+    new_cube.addAttr("my_custom_attribute", attributeType="bool", keyable=True)
+    with pytest.raises(animation_io.SerialAnimatorAttributeMismatchError):
+        animation_io.set_node_data(new_cube, data)
 
 
 def test_get_nodes(keyed_cube, cube):
