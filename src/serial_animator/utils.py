@@ -52,7 +52,7 @@ class Undo(ContextDecorator):
         my_function
     """
 
-    def __init__(self, undoable=True, name="PythonAction", **kwargs):
+    def __init__(self, name="PythonAction", undoable=True, **kwargs):
         super(Undo, self).__init__(**kwargs)
         self.orig_state = pm.undoInfo(query=True, state=True)
         self.state = undoable
