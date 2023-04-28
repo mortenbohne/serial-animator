@@ -17,6 +17,7 @@ from serial_animator.ui.view_grabber import AnimationViewGrabber
 from serial_animator import log
 
 _logger = log.log(__name__)
+_logger.setLevel("DEBUG")
 
 
 class AnimationWidget(FilePreviewWidgetBase):
@@ -112,7 +113,7 @@ class AnimationWidget(FilePreviewWidgetBase):
         self.load_animation()
 
     def load_animation(self):
-        nodes = animation_io.get_nodes()
+        nodes = animation_io.get_selection()
         animation_io.load_animation(self.path, nodes)
 
 
