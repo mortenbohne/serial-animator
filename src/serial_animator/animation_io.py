@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Optional, Literal, Dict, Iterable
+from typing import List, Tuple, Optional, Literal, Iterable
 from collections import OrderedDict
 
 import serial_animator.find_nodes as find_nodes
@@ -155,17 +155,6 @@ def get_weighted_tangents(attribute: pm.general.Attribute) -> bool:
         raise SerialAnimatorNoKeyError(attribute=attribute)
 
 
-def get_weighted_tangent_value_to_apply(
-        attribute: pm.general.Attribute, input_value: bool
-):
-    if input_value is True:
-        return input_value
-    existing_value = pm.keyTangent(attribute, weightedTangents=True, query=True)
-    if existing_value is True:
-        return existing_value
-    return input_value
-
-
 def set_weighted_tangents(attribute: pm.general.Attribute, weighted: bool) -> bool:
     """
     Sets weighted tangents for keys on an attribute
@@ -195,9 +184,7 @@ def set_node_data(
             )
         key_data = attribute_data.get("keys")
         remove_existing_keys(attribute, key_data, start=start, end=end)
-        weighted_tangents = get_weighted_tangent_value_to_apply(
-            attribute=attribute, input_value=attribute_data.get("weightedTangents")
-        )
+        weighted_tangents = attribute_data.get("weightedTangents")
         set_infinity(
             attribute=attribute,
             pre_infinity=attribute_data.get("preInfinity"),

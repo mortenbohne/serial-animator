@@ -15,6 +15,11 @@ def data_preview(get_test_data_dir):
 
 
 @pytest.fixture()
+def cube_anim_file(get_test_data_dir):
+    return get_test_data_dir / "test_cube.anim"
+
+
+@pytest.fixture()
 def preview_sequence(tmp_path, data_preview):
     preview_path = tmp_path / "preview"
     preview_path.mkdir(parents=True, exist_ok=True)

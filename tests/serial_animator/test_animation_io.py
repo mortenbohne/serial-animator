@@ -80,7 +80,7 @@ def test_load_animation(caplog, keyed_cube, preview_sequence, tmp_path):
     cube = pm.polyCube(constructionHistory=False)[0]
 
     animation_io.load_animation(path=data_path, nodes=[cube])
-    # assert animation_io.has_animation(cube)
+    assert animation_io.has_animation(cube)
 
 
 def test_set_node_data(caplog, keyed_cube):
@@ -111,6 +111,18 @@ def test_save_animation_from_selection(tmp_path, preview_sequence, keyed_cube):
     pm.select(keyed_cube)
     result = animation_io.save_animation_from_selection(out_path, preview_sequence)
     assert result.is_file()
+
+
+def test_get_selection(cube):
+    pm.select(cube)
+    assert animation_io.get_selection() == [cube]
+
+
+def test_extract_meta_data(cube_anim_file):
+    meta_data = animation_io.extract_meta_data(cube_anim_file)
+    assert meta_data.get("nodes") == ["|pCube1"]
+    assert meta_data.get("frame_range") == [1, 144]
+    assert meta_data.get("time_unit") == 25.0
 
 
 @pytest.fixture()
