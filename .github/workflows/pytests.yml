@@ -1,12 +1,13 @@
 # Testing job using pytest running on mayapy
 
-name: Pytest
+name: Pytest-maya2023.3
 
 on:
   push:
     branches: [ "development" ]
   pull_request:
     branches: [ "development" ]
+  workflow_dispatch:
 
 jobs:
   test:
