@@ -13,7 +13,7 @@ from serial_animator.exceptions import SerialAnimatorSceneNotSavedError
 import logging
 
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+# _logger.setLevel(logging.DEBUG)
 
 
 def test_get_scene_name(tmp_scene):

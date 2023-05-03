@@ -1,8 +1,8 @@
 from PySide2 import QtWidgets, QtGui
-import logging
 from serial_animator.ui.flowlayout import FlowLayout
+from serial_animator import log
 
-_logger = logging.getLogger(__name__)
+_logger = log.log(__name__)
 
 try:
     from maya.app.general.mayaMixin import MayaQWidgetBaseMixin

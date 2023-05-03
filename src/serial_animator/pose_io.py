@@ -9,10 +9,9 @@ from serial_animator.file_io import (
 )
 import serial_animator.find_nodes as find_nodes
 
-import logging
+from serial_animator import log
 
-_logger = logging.getLogger(__name__)
-
+_logger = log.log(__name__)
 
 # _logger.setLevel("DEBUG")
 
@@ -23,20 +22,6 @@ class SerialAnimatorPoseLibraryError(SerialAnimatorError):
 
 class SerialAnimatorSavePoseError(SerialAnimatorPoseLibraryError):
     """Error when saving pose"""
-
-
-class SerialAnimatorNoNodesSelectedError(SerialAnimatorPoseLibraryError):
-    """Error when no nodes are selected"""
-
-    def __init__(self, message="Please select controls"):
-        super(SerialAnimatorNoNodesSelectedError, self).__init__(message)
-
-
-class SerialAnimatorNoNodesSelectedForLoadError(SerialAnimatorNoNodesSelectedError):
-    """Error when no nodes are selected"""
-
-    def __init__(self, message="Please select controls to apply pose to"):
-        super(SerialAnimatorNoNodesSelectedForLoadError, self).__init__(message)
 
 
 def get_nodes() -> list:

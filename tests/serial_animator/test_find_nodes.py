@@ -32,7 +32,10 @@ def test_strip_namespaces_gen(namespaced_cube, cube, caplog):
     assert len(res) == 3
     assert res[0][0] == "FOO"
     assert res[-1][0] == ""
-    assert next(find_nodes.strip_namespaces_gen(cube.fullPath())) == ("", cube.longName())
+    assert next(find_nodes.strip_namespaces_gen(cube.fullPath())) == (
+        "",
+        cube.longName(),
+    )
     with caplog.at_level(logging.WARNING):
         assert next(find_nodes.strip_namespaces_gen("invalidNodePath")) is None
         assert "not a valid node-path" in caplog.text
@@ -44,28 +47,13 @@ def test_strip_all_namespaces(cube, namespaced_cube, caplog):
             find_nodes.strip_all_namespaces(namespaced_cube.fullPath()) == "|namespacedCube"
     )
     with caplog.at_level(logging.WARNING):
-        assert find_nodes.strip_all_namespaces("not_a_node_path") == None
+        assert find_nodes.strip_all_namespaces("not_a_node_path") is None
         assert "not a valid node-path" in caplog.text
 
 
 def test_get_node_path_dict(two_cubes, time_node):
     assert isinstance(find_nodes.get_node_path_dict(two_cubes), dict)
-    assert find_nodes.get_node_path_dict([time_node]) == dict()
-
-
-@pytest.fixture()
-def time_node():
-    yield pm.ls(type=pm.nodetypes.Time)[0]
-
-
-@pytest.fixture()
-def namespaced_cube():
-    pm.namespace(add="FOO:BAR")
-    pm.namespace(set="FOO:BAR")
-    cube = pm.polyCube(constructionHistory=False, name="namespacedCube")[0]
-    pm.namespace(set=":")
-    yield cube
-    pm.newFile(force=True)
+    assert find_nodes.get_node_path_dict([time_node]) == dict({"time1": time_node})
 
 
 def test_node_dict_to_path_dict(cube, time_node):
@@ -82,3 +70,17 @@ def test_node_dict_to_path_dict(cube, time_node):
     for node in non_dag_node_dict.keys():
         v = non_dag_node_dict[node]
         assert v == non_dag_path_dict[node.longName()]
+
+
+@pytest.fixture()
+def namespaced_cube():
+    pm.namespace(add="FOO:BAR")
+    pm.namespace(set="FOO:BAR")
+    cube = pm.polyCube(constructionHistory=False, name="namespacedCube")[0]
+    pm.namespace(set=":")
+    yield cube
+
+
+@pytest.fixture()
+def time_node():
+    yield pm.ls(type=pm.nodetypes.Time)[0]

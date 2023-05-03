@@ -3,10 +3,9 @@ import getpass
 from typing import Optional
 import pymel.core as pm
 from serial_animator.exceptions import SerialAnimatorSceneNotSavedError
-import logging
+from serial_animator import log
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+_logger = log.log(__name__)
 
 
 def get_scene_name() -> pathlib.Path:

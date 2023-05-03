@@ -15,6 +15,11 @@ def data_preview(get_test_data_dir):
 
 
 @pytest.fixture()
+def cube_anim_file(get_test_data_dir):
+    return get_test_data_dir / "test_cube.anim"
+
+
+@pytest.fixture()
 def preview_sequence(tmp_path, data_preview):
     preview_path = tmp_path / "preview"
     preview_path.mkdir(parents=True, exist_ok=True)
@@ -46,7 +51,6 @@ def cube_keyable_data(scope="function"):
 def cube():
     cube = pm.polyCube(constructionHistory=False)[0]
     yield cube
-    pm.newFile(force=True)
 
 
 @pytest.fixture()
@@ -54,4 +58,8 @@ def two_cubes():
     cube1 = pm.polyCube(constructionHistory=False)[0]
     cube2 = pm.polyCube(constructionHistory=False)[0]
     yield [cube1, cube2]
+
+
+@pytest.fixture(autouse=True)
+def new_file():
     pm.newFile(force=True)

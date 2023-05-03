@@ -7,9 +7,9 @@ https://doc.qt.io/qtforpython/examples/example_widgets_layouts_flowlayout.html
 """
 import sys
 from PySide2 import QtWidgets, QtCore
-import logging
+from serial_animator import log
 
-_logger = logging.getLogger(__name__)
+_logger = log.log(__name__)
 
 
 # _logger.setLevel("DEBUG")

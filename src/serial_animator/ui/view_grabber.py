@@ -1,12 +1,12 @@
 import uuid
 from pathlib import Path
 from PySide2 import QtWidgets, QtCore
-import logging
 import pymel.core as pm
 from serial_animator.ui.utils import get_maya_main_window
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel("DEBUG")
+from serial_animator import log
+
+_logger = log.log(__name__)
 
 
 def get_current_camera() -> pm.nodetypes.Transform:

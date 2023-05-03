@@ -4,7 +4,7 @@ import serial_animator.file_io
 import logging
 
 _logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+# _logger.setLevel(logging.DEBUG)
 
 
 def test_archive_files(tmp_archive, tmp_path, json_file):

@@ -4,7 +4,6 @@ import sys
 from typing import Generator, List
 import subprocess
 import tempfile
-import logging
 import uuid
 
 from PySide2 import QtWidgets, QtCore, QtGui
@@ -15,8 +14,9 @@ import serial_animator.scene_paths as scene_paths
 from serial_animator.ui.widgets import MayaWidget, ScrollFlowWidget
 from serial_animator.ui.view_grabber import TmpViewport
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+from serial_animator import log
+
+_logger = log.log(__name__)
 
 
 class FilePreviewWidgetBase(QtWidgets.QLabel):
@@ -204,7 +204,8 @@ class TabWidget(QtWidgets.QTabWidget):
     def add_tab(self, path) -> FileWidgetHolderBase:
         return self.DataHolderWidget(path=path)
 
-    def dir_changed(self, path):
+    def dir_changed(self, path: str):
+        path = Path(path)
         tab_dict = dict()
 
         tabs = [self.widget(i) for i in range(self.count())]
