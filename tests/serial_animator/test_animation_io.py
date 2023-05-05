@@ -125,6 +125,17 @@ def test_extract_meta_data(cube_anim_file):
     assert meta_data.get("time_unit") == 25.0
 
 
+def test_get_animation_layers():
+    assert animation_io.get_root_animation_layer() is None
+    test_layer = pm.animLayer("my_test_layer")
+    root = animation_io.get_root_animation_layer()
+    assert root.name() == "BaseAnimation"
+    assert animation_io.get_animation_layer_children(root)[0] == test_layer
+    attribute_names = animation_io.get_anim_layer_attribute_names()
+    for attribute_name in attribute_names:
+        assert root.hasAttr(attribute_name)
+
+
 @pytest.fixture()
 def keyed_cube():
     cube = pm.polyCube(constructionHistory=False)[0]

@@ -378,7 +378,8 @@ def set_tangent(
         inAngle=in_angle,
         outAngle=out_angle,
         inWeight=in_weight,
-        outWeight=out_weight)
+        outWeight=out_weight,
+    )
     if curve_weights is True:
         pm.keyTangent(
             attribute,
@@ -480,3 +481,36 @@ def get_anim_data(nodes: Iterable, frame_range=None) -> dict:
 
 def extract_meta_data(archive) -> dict:
     return read_data_from_archive(archive, json_name="meta_data.json")
+
+
+def get_root_animation_layer() -> Optional[pm.nodetypes.AnimLayer]:
+    """
+    Gets root animationLayer if it exists. Root layer only exists if
+    other layers have existed in scene
+    """
+    return pm.animLayer(root=True, query=True)
+
+
+def get_animation_layer_children(
+        animation_layer: pm.nodetypes.AnimLayer,
+) -> List[pm.nodetypes.AnimLayer]:
+    """Get children of an animation layer"""
+    return pm.animLayer(animation_layer, children=True, query=True)
+
+
+def get_anim_layer_attribute_names():
+    """
+    Get a list of those attributes on an animation layer we want to save
+    """
+    return (
+        "mute",
+        "solo",
+        "lock",
+        "ghost",
+        "ghostColor",
+        "override",
+        "passthrough",
+        "weight",
+        "rotationAccumulationMode",
+        "scaleAccumulationMode",
+    )
