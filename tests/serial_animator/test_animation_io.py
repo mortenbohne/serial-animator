@@ -15,8 +15,8 @@ def test_get_node_data(keyed_cube):
         keyed_cube.translateX
     )
     assert len(all_data.keys()) == 2
-    assert len(animation_io.get_node_data(keyed_cube, start=2, end=20).keys()) == 1
-    assert len(animation_io.get_node_data(keyed_cube, start=100, end=200).keys()) == 0
+    assert len(animation_io.get_node_data(keyed_cube, frame_range=(2, 20)).keys()) == 1
+    assert len(animation_io.get_node_data(keyed_cube, frame_range=(100, 200)).keys()) == 0
 
 
 def test_get_attribute_data(keyed_cube):
@@ -44,9 +44,9 @@ def test_get_key_data(keyed_cube):
     assert key_10_tangent[4:] == ("flat", "auto", True, False)
     with pytest.raises(KeyError):
         _ = data[float(3)]
-    range_data = animation_io.get_key_data(keyed_cube.tx, start=0, end=20)
+    range_data = animation_io.get_key_data(keyed_cube.tx, frame_range=(0, 20))
     assert data == range_data
-    out_of_range_data = animation_io.get_key_data(keyed_cube.tx, start=20, end=30)
+    out_of_range_data = animation_io.get_key_data(keyed_cube.tx, frame_range=(20, 30))
     assert len(out_of_range_data) == 0
 
 
@@ -67,7 +67,7 @@ def test_get_weighted_tangents(keyed_cube):
         animation_io.get_weighted_tangents(keyed_cube.ty)
 
 
-def test_SerialAnimatorNoKeyError():
+def test_serial_animator_no_key_error():
     with pytest.raises(animation_io.SerialAnimatorKeyError):
         raise animation_io.SerialAnimatorNoKeyError()
 

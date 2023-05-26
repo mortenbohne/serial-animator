@@ -1,8 +1,8 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Optional, Literal, Iterable
-from collections import OrderedDict
+from typing import List, Tuple, Optional, Literal, Iterable, Union
+from collections import OrderedDict, defaultdict
 
 import serial_animator.find_nodes as find_nodes
 
@@ -218,29 +218,28 @@ def remove_existing_keys(
     pm.cutKey(attribute, time=(min_frame, max_frame), clear=True)
 
 
-def get_node_data(node, start: Optional[float] = None, end: Optional[float] = None):
+def get_node_data(node, frame_range: Optional[Tuple[float, float]] = None):
     data = dict()
     for attribute, _ in node.inputs(
             plugs=True, connections=True, type=pm.nodetypes.AnimCurve
     ):
         # todo: if node have keys out of range, should keyframes be inserted at start, end?
         # nodes might have keyframes out of range of start, end
-        attribute_data = get_attribute_data(attribute=attribute, start=start, end=end)
+        attribute_data = get_attribute_data(
+            attribute=attribute, frame_range=frame_range
+        )
         if attribute_data["keys"]:
             data[attribute.shortName()] = attribute_data
     return data
 
 
 def get_attribute_data(
-        attribute: pm.general.Attribute,
-        start: Optional[float] = None,
-        end: Optional[float] = None,
+        attribute: pm.general.Attribute, frame_range: Optional[Tuple[float, float]] = None
 ) -> dict:
     """
     Gets key-data for attribute
+    :param frame_range:
     :param attribute:
-    :param start:
-    :param end:
     :return:
     """
     data = dict()
@@ -249,21 +248,19 @@ def get_attribute_data(
     data["preInfinity"] = pre_infinity
     data["postInfinity"] = post_infinity
     data["weightedTangents"] = get_weighted_tangents(attribute)
-    data["keys"] = get_key_data(attribute, start, end)
+    data["keys"] = get_key_data(attribute, frame_range=frame_range)
 
     return data
 
 
 def get_key_data(
-        attribute: pm.general.Attribute,
-        start: Optional[float] = None,
-        end: Optional[float] = None,
+        attribute: Union[pm.general.Attribute, pm.nodetypes.AnimCurve],
+        frame_range: Optional[Tuple[float, float]] = None,
 ) -> KeyDataType:
     """
     Gets the animation-data for an attribute
+    :param frame_range:
     :param attribute:
-    :param start:
-    :param end:
     :return:
     OrderedDict with key-data:
     {
@@ -284,10 +281,12 @@ def get_key_data(
 
     """
     data = OrderedDict()
+    if not frame_range:
+        frame_range = (None, None)
     time_values = pm.keyframe(
         attribute,
         query=True,
-        time=(start, end),
+        time=frame_range,
         absolute=True,
         timeChange=True,
         valueChange=True,
@@ -295,7 +294,7 @@ def get_key_data(
     tangent_values = pm.keyTangent(
         attribute,
         query=True,
-        time=(start, end),
+        time=frame_range,
         inAngle=True,
         outAngle=True,
         inWeight=True,
@@ -470,13 +469,81 @@ def get_meta_data(nodes: Iterable, frame_range=None) -> dict:
     return data
 
 
-def get_anim_data(nodes: Iterable, frame_range=None) -> dict:
-    # todo: support animation layers
-    start, end = frame_range or get_frame_range()
+def get_anim_data(
+        nodes: Iterable, frame_range: Optional[Tuple[float, float]] = None
+) -> dict:
+    frame_range = frame_range or get_frame_range()
     data = dict()
+
     for node in nodes:
-        data[node] = get_node_data(node, start=start, end=end)
+        data[node] = get_node_data(node, frame_range)
     return data
+
+
+def get_anim_data2(
+        nodes: Iterable, frame_range=None, layer=None
+) -> Tuple[dict, dict, dict]:
+    frame_range = frame_range or get_frame_range()
+    child_data = dict()
+    if layer:
+        node_data = get_attribute_dict_from_layer(
+            animation_layer=layer, nodes=nodes, frame_range=frame_range
+        )
+    else:
+        node_data = dict()
+        for node in nodes:
+            node_data[node] = get_node_data(node, frame_range)
+    layer = layer or get_root_animation_layer()
+    if layer:
+        layer_data = get_animation_layer_data(layer)
+        for child in get_animation_layer_children(layer):
+            child_data[child.longName()] = get_anim_data2(nodes, frame_range, child)
+    else:
+        layer_data = dict()
+
+    return layer_data, node_data, child_data
+
+
+def set_anim_data2(data, nodes: Iterable, frame_range=None, layer_name=None):
+    layer_data, node_data, child_data = data
+    if layer_data:
+        if layer_name:
+            layer = get_layer(layer_name) or create_animation_layer(layer_name)
+        else:
+            layer = get_root_animation_layer()
+        # If layer_name is None, animation data is stored on root layer.
+        # If there is no root layer in scene, don't apply the layer_data
+        if layer:
+            set_animation_layer_data(layer, layer_data)
+
+    if child_data:
+        for child_name, data in child_data.items():
+            set_anim_data2(data, nodes, frame_range, child_name)
+
+
+def get_layer(layer_name):
+    try:
+        node = pm.PyNode(layer_name)
+        if isinstance(node, pm.nodetypes.AnimLayer):
+            return node
+    except pm.MayaNodeError:
+        pass
+
+
+def create_animation_layer(layer_name):
+    return pm.animLayer(layer_name)
+
+
+def get_animation_layer_data(layer: pm.nodetypes.AnimLayer) -> dict:
+    layer_data = dict()
+    for attribute_name in get_anim_layer_attribute_names():
+        layer_data[attribute_name] = layer.attr(attribute_name).get()
+    return layer_data
+
+
+def set_animation_layer_data(layer, data):
+    for attribute_name, value in data:
+        layer.attr(attribute_name).set(value)
 
 
 def extract_meta_data(archive) -> dict:
@@ -524,3 +591,40 @@ def get_anim_layer_curves(anim_layer: pm.nodetypes.AnimLayer, nodes: Iterable):
         if not bool(set(curve.listHistory(future=True)) & nodes):
             continue
         yield curve
+
+
+def get_attribute_dict_from_layer(
+        animation_layer: pm.nodetypes.AnimLayer,
+        nodes: Iterable,
+        frame_range: Optional[Tuple[float, float]] = None,
+):
+    data = defaultdict(dict)
+    for attribute, curve in zip(
+            animation_layer.getAttributes(), animation_layer.getAnimCurves()
+    ):
+        node = attribute.node()
+        if node not in nodes:
+            continue
+        attribute_data = get_anim_curve_data(curve, frame_range)
+        data[find_nodes.get_node_path(node)][attribute.shortName()] = attribute_data
+    return dict(data)
+
+
+def get_anim_curve_data(
+        anim_curve: pm.nodetypes.AnimCurve,
+        frame_range: Optional[Tuple[float, float]] = None,
+) -> dict:
+    """
+    Gets key-data for attribute
+    :param anim_curve:
+    :return:
+    """
+    data = dict()
+    pre_infinity = str(anim_curve.getPreInfinityType())
+    post_infinity = str(anim_curve.getPostInfinityType())
+    data["attributeType"] = anim_curve.output.type()
+    data["preInfinity"] = pre_infinity
+    data["postInfinity"] = post_infinity
+    data["weightedTangents"] = anim_curve.isWeighted()
+    data["keys"] = get_key_data(anim_curve, frame_range=frame_range)
+    return data
