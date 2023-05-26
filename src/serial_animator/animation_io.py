@@ -62,9 +62,9 @@ KeyDataType = OrderedDict[float, Tuple[float, TangentDataType]]
 
 class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
     def __init__(
-            self,
-            message: Optional[str] = None,
-            attribute: Optional[pm.general.Attribute] = None,
+        self,
+        message: Optional[str] = None,
+        attribute: Optional[pm.general.Attribute] = None,
     ):
         if not message:
             if attribute:
@@ -76,7 +76,7 @@ class SerialAnimatorNoKeyError(SerialAnimatorKeyError):
 
 @Undo(name="Serial-Animator: Load Animation")
 def load_animation(
-        path: Path, nodes=None, start: Optional[float] = None, end: Optional[float] = None
+    path: Path, nodes=None, start: Optional[float] = None, end: Optional[float] = None
 ):
     data = read_animation_data(path)
     node_dict = find_nodes.search_nodes(list(data.keys()), nodes)
@@ -122,9 +122,9 @@ def get_infinity(attribute: pm.general.Attribute) -> Tuple[InfinityType, Infinit
 
 
 def set_infinity(
-        attribute: pm.general.Attribute,
-        pre_infinity: InfinityType,
-        post_infinity: InfinityType,
+    attribute: pm.general.Attribute,
+    pre_infinity: InfinityType,
+    post_infinity: InfinityType,
 ):
     """
     Sets the pre- and post-infinity for attribute.
@@ -168,7 +168,7 @@ def has_animation(node):
 
 
 def set_node_data(
-        node, data, start: Optional[float] = None, end: Optional[float] = None
+    node, data, start: Optional[float] = None, end: Optional[float] = None
 ):
     for attribute_name, attribute_data in data.items():
         input_type = attribute_data.get("attributeType")
@@ -201,10 +201,10 @@ def set_node_data(
 
 
 def remove_existing_keys(
-        attribute,
-        key_data,
-        start: Optional[float] = None,
-        end: Optional[float] = None,
+    attribute,
+    key_data,
+    start: Optional[float] = None,
+    end: Optional[float] = None,
 ):
     # get range of keys to remove
     time_values = list(key_data)
@@ -221,7 +221,7 @@ def remove_existing_keys(
 def get_node_data(node, frame_range: Optional[Tuple[float, float]] = None):
     data = dict()
     for attribute, _ in node.inputs(
-            plugs=True, connections=True, type=pm.nodetypes.AnimCurve
+        plugs=True, connections=True, type=pm.nodetypes.AnimCurve
     ):
         # todo: if node have keys out of range, should keyframes be inserted at start, end?
         # nodes might have keyframes out of range of start, end
@@ -234,7 +234,7 @@ def get_node_data(node, frame_range: Optional[Tuple[float, float]] = None):
 
 
 def get_attribute_data(
-        attribute: pm.general.Attribute, frame_range: Optional[Tuple[float, float]] = None
+    attribute: pm.general.Attribute, frame_range: Optional[Tuple[float, float]] = None
 ) -> dict:
     """
     Gets key-data for attribute
@@ -254,8 +254,8 @@ def get_attribute_data(
 
 
 def get_key_data(
-        attribute: Union[pm.general.Attribute, pm.nodetypes.AnimCurve],
-        frame_range: Optional[Tuple[float, float]] = None,
+    attribute: Union[pm.general.Attribute, pm.nodetypes.AnimCurve],
+    frame_range: Optional[Tuple[float, float]] = None,
 ) -> KeyDataType:
     """
     Gets the animation-data for an attribute
@@ -307,17 +307,17 @@ def get_key_data(
     for i, time_value in enumerate(time_values):
         time, value = time_value
         start_index = i * 8
-        tangent = tuple(tangent_values[start_index: start_index + 8])
+        tangent = tuple(tangent_values[start_index : start_index + 8])
         data[float(time)] = (value, tangent)
     return data
 
 
 def set_key_data(
-        attribute: pm.general.Attribute,
-        data: KeyDataType,
-        start: Optional[float] = None,
-        end: Optional[float] = None,
-        weighted_tangents: Optional[bool] = True,
+    attribute: pm.general.Attribute,
+    data: KeyDataType,
+    start: Optional[float] = None,
+    end: Optional[float] = None,
+    weighted_tangents: Optional[bool] = True,
 ):
     """
     Removes existing keyframes in time-range and create new keys based on data
@@ -355,10 +355,10 @@ def set_key_data(
 
 
 def set_tangent(
-        attribute: pm.general.Attribute,
-        time: float,
-        tangent_data: TangentDataType,
-        curve_weights: Optional[bool] = True,
+    attribute: pm.general.Attribute,
+    time: float,
+    tangent_data: TangentDataType,
+    curve_weights: Optional[bool] = True,
 ):
     """Sets tangent-data for keyframe at time"""
     (
@@ -470,7 +470,7 @@ def get_meta_data(nodes: Iterable, frame_range=None) -> dict:
 
 
 def get_anim_data(
-        nodes: Iterable, frame_range: Optional[Tuple[float, float]] = None
+    nodes: Iterable, frame_range: Optional[Tuple[float, float]] = None
 ) -> dict:
     frame_range = frame_range or get_frame_range()
     data = dict()
@@ -481,7 +481,7 @@ def get_anim_data(
 
 
 def get_anim_data2(
-        nodes: Iterable, frame_range=None, layer=None
+    nodes: Iterable, frame_range=None, layer=None
 ) -> Tuple[dict, dict, dict]:
     frame_range = frame_range or get_frame_range()
     child_data = dict()
@@ -559,7 +559,7 @@ def get_root_animation_layer() -> Optional[pm.nodetypes.AnimLayer]:
 
 
 def get_animation_layer_children(
-        animation_layer: pm.nodetypes.AnimLayer,
+    animation_layer: pm.nodetypes.AnimLayer,
 ) -> List[pm.nodetypes.AnimLayer]:
     """Get children of an animation layer"""
     return pm.animLayer(animation_layer, children=True, query=True)
@@ -594,13 +594,13 @@ def get_anim_layer_curves(anim_layer: pm.nodetypes.AnimLayer, nodes: Iterable):
 
 
 def get_attribute_dict_from_layer(
-        animation_layer: pm.nodetypes.AnimLayer,
-        nodes: Iterable,
-        frame_range: Optional[Tuple[float, float]] = None,
+    animation_layer: pm.nodetypes.AnimLayer,
+    nodes: Iterable,
+    frame_range: Optional[Tuple[float, float]] = None,
 ):
     data = defaultdict(dict)
     for attribute, curve in zip(
-            animation_layer.getAttributes(), animation_layer.getAnimCurves()
+        animation_layer.getAttributes(), animation_layer.getAnimCurves()
     ):
         node = attribute.node()
         if node not in nodes:
@@ -611,8 +611,8 @@ def get_attribute_dict_from_layer(
 
 
 def get_anim_curve_data(
-        anim_curve: pm.nodetypes.AnimCurve,
-        frame_range: Optional[Tuple[float, float]] = None,
+    anim_curve: pm.nodetypes.AnimCurve,
+    frame_range: Optional[Tuple[float, float]] = None,
 ) -> dict:
     """
     Gets key-data for attribute
