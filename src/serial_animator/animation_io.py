@@ -514,3 +514,13 @@ def get_anim_layer_attribute_names():
         "rotationAccumulationMode",
         "scaleAccumulationMode",
     )
+
+
+def get_anim_layer_curves(anim_layer: pm.nodetypes.AnimLayer, nodes: Iterable):
+    curves = anim_layer.getAnimCurves()
+    nodes = set(nodes)
+    for curve in curves:
+        # check if nodes are affected by that curve
+        if not bool(set(curve.listHistory(future=True)) & nodes):
+            continue
+        yield curve

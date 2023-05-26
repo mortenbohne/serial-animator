@@ -136,6 +136,20 @@ def test_get_animation_layers():
         assert root.hasAttr(attribute_name)
 
 
+def test_get_anim_layer_curves(cube):
+    test_layer = pm.animLayer("my_test_layer")
+    test_layer.setAttribute(cube.tx)
+    test_layer.setAttribute(cube.tz)
+    pm.setKeyframe(cube, value=0, time=0, attribute="translateX", animLayer=test_layer)
+    pm.setKeyframe(cube, value=0, time=0, attribute="translateZ", animLayer=test_layer)
+    pm.setKeyframe(cube, value=0, time=0, attribute="translateZ")
+    assert len(list(animation_io.get_anim_layer_curves(test_layer, nodes=[cube]))) == 2
+    assert isinstance(
+        next(animation_io.get_anim_layer_curves(test_layer, [cube])),
+        pm.nodetypes.AnimCurve,
+    )
+
+
 @pytest.fixture()
 def keyed_cube():
     cube = pm.polyCube(constructionHistory=False)[0]
@@ -145,7 +159,7 @@ def keyed_cube():
     pm.keyTangent(cube.tx, weightedTangents=True)
     pm.keyTangent(
         cube.tx,
-        time=0,
+        time=(0.0,),
         inAngle=0.0,
         outAngle=1.0,
         inWeight=2.0,
@@ -156,5 +170,5 @@ def keyed_cube():
         weightLock=False,
     )
     pm.setKeyframe(cube, value=10, time=10, attribute="translateX")
-    pm.keyTangent(cube.tx, time=10, inTangentType="flat", outTangentType="auto")
+    pm.keyTangent(cube.tx, time=(10,), inTangentType="flat", outTangentType="auto")
     yield cube
