@@ -416,8 +416,7 @@ def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
     shutil.copy(
         os.path.join(preview_dir_path, get_preview_image(image_paths)), preview_image
     )
-    path_data = serial_animator.find_nodes.node_dict_to_path_dict(anim_data)
-    write_json_data(path_data, anim_data_path)
+    write_json_data(anim_data, anim_data_path)
     write_json_data(meta_data, meta_path)
     files = [preview_image, meta_path, anim_data_path, *image_paths]
     _logger.debug(f"files: {files}")
@@ -469,7 +468,7 @@ def get_meta_data(nodes: Iterable, frame_range=None) -> dict:
     return data
 
 
-def get_anim_data(
+def get_anim_data_old(
     nodes: Iterable, frame_range: Optional[Tuple[float, float]] = None
 ) -> dict:
     frame_range = frame_range or get_frame_range()
@@ -480,7 +479,7 @@ def get_anim_data(
     return data
 
 
-def get_anim_data2(
+def get_anim_data(
     nodes: Iterable, frame_range=None, layer=None
 ) -> Tuple[dict, dict, dict]:
     frame_range = frame_range or get_frame_range()
@@ -492,12 +491,12 @@ def get_anim_data2(
     else:
         node_data = dict()
         for node in nodes:
-            node_data[node] = get_node_data(node, frame_range)
+            node_data[find_nodes.get_node_path(node)] = get_node_data(node, frame_range)
     layer = layer or get_root_animation_layer()
     if layer:
         layer_data = get_animation_layer_data(layer)
         for child in get_animation_layer_children(layer):
-            child_data[child.longName()] = get_anim_data2(nodes, frame_range, child)
+            child_data[child.longName()] = get_anim_data(nodes, frame_range, child)
     else:
         layer_data = dict()
 
@@ -586,7 +585,7 @@ def get_anim_layer_attribute_names():
 def get_anim_layer_curves(anim_layer: pm.nodetypes.AnimLayer, nodes: Iterable):
     curves = anim_layer.getAnimCurves()
     nodes = set(nodes)
-    for curve in curves:
+    for curve in curves:  # type: ignore
         # check if nodes are affected by that curve
         if not bool(set(curve.listHistory(future=True)) & nodes):
             continue
@@ -599,7 +598,7 @@ def get_attribute_dict_from_layer(
     frame_range: Optional[Tuple[float, float]] = None,
 ):
     data = defaultdict(dict)
-    for attribute, curve in zip(
+    for attribute, curve in zip(  # type: ignore
         animation_layer.getAttributes(), animation_layer.getAnimCurves()
     ):
         node = attribute.node()
