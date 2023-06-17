@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+from pprint import pformat
 from typing import List, Tuple, Optional, Literal, Iterable, Union
 from collections import OrderedDict, defaultdict
 
@@ -19,8 +20,8 @@ import serial_animator.find_nodes
 from serial_animator import log
 from serial_animator.exceptions import SerialAnimatorError
 
-_logger = log.log(__name__)
-_logger.setLevel("DEBUG")
+logger = log.log(__name__)
+logger.setLevel("DEBUG")
 
 
 class SerialAnimatorKeyError(SerialAnimatorError):
@@ -173,7 +174,7 @@ def set_node_data(
     for attribute_name, attribute_data in data.items():
         input_type = attribute_data.get("attributeType")
         if not hasattr(node, attribute_name):
-            _logger.debug(f"{node}.{attribute_name} doesn't exist. Adding attribute")
+            logger.debug(f"{node}.{attribute_name} doesn't exist. Adding attribute")
             node.addAttr(attribute_name, attributeType=input_type, keyable=True)
         attribute = node.attr(attribute_name)
         attribute_type = attribute.type()
@@ -411,7 +412,7 @@ def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
     meta_path = preview_dir_path / "meta_data.json"
     anim_data_path = preview_dir_path / "anim_data.json"
     image_paths = list(preview_dir_path.iterdir())
-    _logger.debug(f"first image: {image_paths}")
+    logger.debug(f"first image: {image_paths}")
     preview_image = preview_dir_path / "preview.jpg"
     shutil.copy(
         os.path.join(preview_dir_path, get_preview_image(image_paths)), preview_image
@@ -419,7 +420,7 @@ def save_animation_from_selection(path: Path, preview_dir_path: Path) -> Path:
     write_json_data(anim_data, anim_data_path)
     write_json_data(meta_data, meta_path)
     files = [preview_image, meta_path, anim_data_path, *image_paths]
-    _logger.debug(f"files: {files}")
+    logger.debug(f"files: {files}")
     archive = archive_files(
         files=[preview_image, meta_path, anim_data_path, *image_paths], out_path=path
     )
@@ -503,7 +504,10 @@ def get_anim_data(
     return layer_data, node_data, child_data
 
 
-def set_anim_data2(data, nodes: Iterable, frame_range=None, layer_name=None):
+def load_anim_data2(data, nodes):
+    node_dict = find_nodes.search_nodes(list(data.keys()), nodes)
+
+def set_anim_data(data, node_dict: dict, frame_range=None, layer_name=None):
     layer_data, node_data, child_data = data
     if layer_data:
         if layer_name:
@@ -514,10 +518,11 @@ def set_anim_data2(data, nodes: Iterable, frame_range=None, layer_name=None):
         # If there is no root layer in scene, don't apply the layer_data
         if layer:
             set_animation_layer_data(layer, layer_data)
+            set_attributes_dict_on_layer(layer, node_dict, node_data)
 
     if child_data:
         for child_name, data in child_data.items():
-            set_anim_data2(data, nodes, frame_range, child_name)
+            set_anim_data(data, node_dict, frame_range, child_name)
 
 
 def get_layer(layer_name):
@@ -541,7 +546,7 @@ def get_animation_layer_data(layer: pm.nodetypes.AnimLayer) -> dict:
 
 
 def set_animation_layer_data(layer, data):
-    for attribute_name, value in data:
+    for attribute_name, value in data.items():
         layer.attr(attribute_name).set(value)
 
 
@@ -590,6 +595,33 @@ def get_anim_layer_curves(anim_layer: pm.nodetypes.AnimLayer, nodes: Iterable):
         if not bool(set(curve.listHistory(future=True)) & nodes):
             continue
         yield curve
+
+
+def set_attributes_dict_on_layer(
+        animation_layer: pm.nodetypes.AnimLayer, node_dict: dict,
+        data: dict, frame_range: Optional[Tuple[float, float]] = None,):
+
+    layer_attributes = animation_layer.getAttributes()
+    for node_name, node_data in data.items():
+        node = node_dict.get(node_name)
+        if not node:
+            continue
+        for attr_name, attr_data in node_data.items():
+            try:
+                node_attribute = node.attr(attr_name)
+            except pm.MayaAttributeError:
+                logger.warning(f"{node} doesn't have attribute {attr_name}")
+                continue
+            if node_attribute not in layer_attributes:
+                animation_layer.setAttribute(node_attribute)
+                curve_name = pm.animLayer(animation_layer, findCurveForPlug=node_attribute, query=True)
+                if curve_name:
+                    curve = pm.PyNode(curve_name[0])
+                    logger.debug(f"Found {curve} for {node_attribute}")
+                else:
+                    logger.debug(f"I should create curve for {node_attribute} on {animation_layer}")
+                # TODO: get anim-curve and set data
+                logger.debug(f"setting data on {node}.{attr_name} - data: {attr_data}")
 
 
 def get_attribute_dict_from_layer(
