@@ -1,4 +1,5 @@
 import functools
+from pathlib import Path
 import pymel.core as pm
 
 
@@ -87,3 +88,19 @@ def is_interactive() -> bool:
     except AttributeError:
         return False
     return True
+
+
+def reload_serial_animator():
+    """
+    Workaround to reload entire serial-animator library.
+    Removes serial_animator modules from 'sys.modules' and imports it again
+    """
+    import sys
+    import serial_animator
+
+    src_folder = Path(serial_animator.__file__).parents[1]
+    if src_folder not in sys.path:
+        sys.path.append(str(src_folder.resolve()))
+    for m in [p for p in sys.modules if p.startswith("serial_animator")]:
+        sys.modules.pop(m)
+    import serial_animator
