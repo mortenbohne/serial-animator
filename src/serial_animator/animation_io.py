@@ -316,18 +316,21 @@ def get_key_data(
 def set_key_data(
     attribute: pm.general.Attribute,
     data: KeyDataType,
+    animation_layer: Optional[pm.nodetypes.AnimLayer] = None,
     start: Optional[float] = None,
     end: Optional[float] = None,
     weighted_tangents: Optional[bool] = True,
 ):
     """
     Removes existing keyframes in time-range and create new keys based on data
+    :param animation_layer:
     :param attribute: attribute to set keys on
     :param data: data to create keyframes from
     :param start: ignore data before start
     :param end: ignore data after end
     :param weighted_tangents: If False, Maya will not be able to set lock-state of tangents
     """
+    logger.debug(f"setting key data on {attribute}. data: {data}")
     should_change_curve_weight = False
     # if we are trying to set weighted tangents, we need to ensure that
     # the curve has that set. In order to do that, the curve must have keys
@@ -342,7 +345,7 @@ def set_key_data(
             if time > end:
                 continue
         value, tangent_data = key_data
-        pm.setKeyframe(attribute, time=time, value=value)
+        pm.setKeyframe(attribute, time=time, value=value, animLayer=animation_layer)
         if should_change_curve_weight:
             # this is not settable before curve has keys!
             set_weighted_tangents(attribute=attribute, weighted=weighted_tangents)
@@ -507,6 +510,7 @@ def get_anim_data(
 def load_anim_data2(data, nodes):
     node_dict = find_nodes.search_nodes(list(data.keys()), nodes)
 
+
 def set_anim_data(data, node_dict: dict, frame_range=None, layer_name=None):
     layer_data, node_data, child_data = data
     if layer_data:
@@ -598,9 +602,11 @@ def get_anim_layer_curves(anim_layer: pm.nodetypes.AnimLayer, nodes: Iterable):
 
 
 def set_attributes_dict_on_layer(
-        animation_layer: pm.nodetypes.AnimLayer, node_dict: dict,
-        data: dict, frame_range: Optional[Tuple[float, float]] = None,):
-
+    animation_layer: pm.nodetypes.AnimLayer,
+    node_dict: dict,
+    data: dict,
+    frame_range: Optional[Tuple[float, float]] = None,
+):
     layer_attributes = animation_layer.getAttributes()
     for node_name, node_data in data.items():
         node = node_dict.get(node_name)
@@ -614,14 +620,25 @@ def set_attributes_dict_on_layer(
                 continue
             if node_attribute not in layer_attributes:
                 animation_layer.setAttribute(node_attribute)
-                curve_name = pm.animLayer(animation_layer, findCurveForPlug=node_attribute, query=True)
-                if curve_name:
-                    curve = pm.PyNode(curve_name[0])
-                    logger.debug(f"Found {curve} for {node_attribute}")
-                else:
-                    logger.debug(f"I should create curve for {node_attribute} on {animation_layer}")
-                # TODO: get anim-curve and set data
-                logger.debug(f"setting data on {node}.{attr_name} - data: {attr_data}")
+            curve_name = pm.animLayer(
+                animation_layer, findCurveForPlug=node_attribute, query=True
+            )
+            if curve_name:
+                curve = pm.PyNode(curve_name[0])
+                set_key_data(
+                    curve, attr_data.get("keys"), animation_layer=animation_layer
+                )
+                logger.debug(f"Found {curve} for {node_attribute}")
+            else:
+                logger.debug(
+                    f"I should create curve for {node_attribute} on {animation_layer}"
+                )
+            logger.debug(
+                f"setting data on {node}.{attr_name} for {animation_layer} - data: {attr_data}"
+            )
+            # TODO: get anim-curve and set data
+            # logger.debug(f"setting data on {node}.{attr_name} for {animation_layer} - data: {attr_data}")
+            # set_key_data(node_attribute, attr_data, animation_layer=animation_layer)
 
 
 def get_attribute_dict_from_layer(
