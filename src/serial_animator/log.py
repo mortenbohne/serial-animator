@@ -3,13 +3,6 @@ Utilities for setting up logging in modules
 """
 import logging
 
-NOTSET = logging.NOTSET
-DEBUG = logging.DEBUG
-INFO = logging.INFO
-WARNING = logging.WARNING
-ERROR = logging.ERROR
-CRITICAL = logging.CRITICAL
-
 
 def log(name):
     """
@@ -24,8 +17,9 @@ def log(name):
     )
     # add formatter to ch
     console_handler.setFormatter(formatter)
-
+    logger.propagate = 0
     # add ch to logger
     logger.handlers = [console_handler]
 
     return logger
+
