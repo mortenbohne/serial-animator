@@ -623,22 +623,20 @@ def set_attributes_dict_on_layer(
             curve_name = pm.animLayer(
                 animation_layer, findCurveForPlug=node_attribute, query=True
             )
-            if curve_name:
-                curve = pm.PyNode(curve_name[0])
+            if not curve_name:
+                d = attr_data.get("keys")
+                logger.debug(f"{attr_name}: {d}")
                 set_key_data(
-                    curve, attr_data.get("keys"), animation_layer=animation_layer
+                    node_attribute, attr_data.get("keys"), animation_layer=animation_layer
                 )
-                logger.debug(f"Found {curve} for {node_attribute}")
-            else:
-                logger.debug(
-                    f"I should create curve for {node_attribute} on {animation_layer}"
+                curve_name = pm.animLayer(
+                    animation_layer, findCurveForPlug=node_attribute, query=True
                 )
-            logger.debug(
-                f"setting data on {node}.{attr_name} for {animation_layer} - data: {attr_data}"
+            curve = pm.PyNode(curve_name[0])
+
+            set_key_data(
+                curve, attr_data.get("keys"), animation_layer=animation_layer
             )
-            # TODO: get anim-curve and set data
-            # logger.debug(f"setting data on {node}.{attr_name} for {animation_layer} - data: {attr_data}")
-            # set_key_data(node_attribute, attr_data, animation_layer=animation_layer)
 
 
 def get_attribute_dict_from_layer(
