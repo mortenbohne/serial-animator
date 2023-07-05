@@ -9,4 +9,5 @@ def test_log(caplog):
         assert "logger2 silenced" not in caplog.text
         assert "logger info silenced" not in caplog.text
         assert "Info from 2 still here" in caplog.text
+        # assert "Debug from 1 still here" in caplog.text
         assert "this debug message shouldn't be seen" not in caplog.text
