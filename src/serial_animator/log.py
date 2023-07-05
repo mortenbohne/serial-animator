@@ -22,7 +22,7 @@ class LogAllLevelsContextManager:
         self.min_level = min_level
 
     def __enter__(self):
-        logging.disable(logging.CRITICAL)
+        logging.disable(self.min_level)
 
     def __call__(self, func):
         """Allow class to be used as decorator"""
