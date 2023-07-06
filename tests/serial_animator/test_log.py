@@ -14,3 +14,15 @@ def test_log(caplog):
         assert "logger info silenced" not in caplog.text
         assert "Info from 2 still here" in caplog.text
         assert "Debug from 1 still here" in caplog.text
+
+
+def test_silenced_logger(caplog):
+    log_functions.silenced_logger()
+    assert "This message from logger2 is silenced" not in caplog.text
+    assert "This message from logger is not silenced" in caplog.text
+
+
+def test_all_silenced_logger(caplog):
+    log_functions.silenced_all_loggers()
+    assert "This is silenced form logger2" not in caplog.text
+    assert "This is also silenced from logger" not in caplog.text

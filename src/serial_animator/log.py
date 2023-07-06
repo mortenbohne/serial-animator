@@ -13,6 +13,15 @@ class LogLevelContextManager:
     def __enter__(self):
         self.logger.setLevel(self.level)
 
+    def __call__(self, func):
+        """Allow class to be used as decorator"""
+
+        def decorator(*args, **kwargs):
+            with self:
+                return func(*args, **kwargs)
+
+        return decorator
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logger.setLevel(self.previous_level)
 
