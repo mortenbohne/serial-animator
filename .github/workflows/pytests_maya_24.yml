@@ -13,7 +13,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: mortenbohne/maya:2024
+      image: ghcr.io/mortenbohne/maya-docker:maya2024
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
