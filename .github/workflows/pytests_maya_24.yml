@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/lego/maya-docker/maya:2024
-    credentials:
-       username: ${{ github.repository_owner }}
-       password: ${{ secrets.CR_PAT }}
+      credentials:
+         username: ${{ github.repository_owner }}
+         password: ${{ secrets.CR_PAT }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
