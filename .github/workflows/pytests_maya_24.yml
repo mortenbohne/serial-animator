@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/mortenbohne/maya-docker/maya:2024
+      image: ghcr.io/mortenbohne/maya-docker:maya2024
       credentials:
          username: ${{ github.repository_owner }}
          password: ${{ secrets.CR_PAT }}
