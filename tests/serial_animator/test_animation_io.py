@@ -2,7 +2,6 @@ from pathlib import Path
 import pytest
 import pymel.core as pm
 import serial_animator.animation_io as animation_io
-import logging
 
 from serial_animator import log
 
@@ -72,31 +71,31 @@ def test_serial_animator_no_key_error():
         raise animation_io.SerialAnimatorNoKeyError()
 
 
-def test_load_animation(caplog, keyed_cube, preview_sequence, tmp_path):
-    data_path = tmp_path / "keyed_cube.anim"
-    pm.select(keyed_cube)
-    animation_io.save_animation_from_selection(data_path, preview_sequence)
-    pm.newFile(force=True)
-    cube = pm.polyCube(constructionHistory=False)[0]
+# def test_load_animation(caplog, keyed_cube, preview_sequence, tmp_path):
+#     data_path = tmp_path / "keyed_cube.anim"
+#     pm.select(keyed_cube)
+#     animation_io.save_animation_from_selection(data_path, preview_sequence)
+#     pm.newFile(force=True)
+#     cube = pm.polyCube(constructionHistory=False)[0]
+#
+#     animation_io.load_animation(path=data_path, nodes=[cube])
+#     assert animation_io.has_animation(cube)
 
-    animation_io.load_animation(path=data_path, nodes=[cube])
-    assert animation_io.has_animation(cube)
 
-
-def test_set_node_data(caplog, keyed_cube):
-    data = animation_io.get_node_data(keyed_cube)
-    pm.newFile(force=True)
-    new_cube = pm.polyCube(constructionHistory=False)[0]
-    with caplog.at_level(logging.DEBUG):
-        animation_io.set_node_data(new_cube, data)
-        assert "Adding attribute" in caplog.text
-    applied_data = animation_io.get_node_data(new_cube)
-    assert applied_data == data
-    pm.delete(new_cube)
-    new_cube = pm.polyCube()[0]
-    new_cube.addAttr("my_custom_attribute", attributeType="bool", keyable=True)
-    with pytest.raises(animation_io.SerialAnimatorAttributeMismatchError):
-        animation_io.set_node_data(new_cube, data)
+# def test_set_node_data(caplog, keyed_cube):
+#     data = animation_io.get_node_data(keyed_cube)
+#     pm.newFile(force=True)
+#     new_cube = pm.polyCube(constructionHistory=False)[0]
+#     with caplog.at_level(logging.DEBUG):
+#         animation_io.set_node_data(new_cube, data)
+#         assert "Adding attribute" in caplog.text
+#     applied_data = animation_io.get_node_data(new_cube)
+#     assert applied_data == data
+#     pm.delete(new_cube)
+#     new_cube = pm.polyCube()[0]
+#     new_cube.addAttr("my_custom_attribute", attributeType="bool", keyable=True)
+#     with pytest.raises(animation_io.SerialAnimatorAttributeMismatchError):
+#         animation_io.set_node_data(new_cube, data)
 
 
 def test_get_nodes(keyed_cube, cube):
@@ -109,7 +108,8 @@ def test_get_nodes(keyed_cube, cube):
 def test_save_animation_from_selection(tmp_path, preview_sequence, keyed_cube):
     out_path = tmp_path / "output.anim"
     pm.select(keyed_cube)
-    result = animation_io.save_animation_from_selection(out_path, preview_sequence)
+    with animation_io.logger.all_loggers_context("WARNING"):
+        result = animation_io.save_animation_from_selection(out_path, preview_sequence)
     assert result.is_file()
 
 

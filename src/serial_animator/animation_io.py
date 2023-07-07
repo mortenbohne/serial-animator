@@ -1,7 +1,6 @@
 import os
 import shutil
 from pathlib import Path
-from pprint import pformat
 from typing import List, Tuple, Optional, Literal, Iterable, Union
 from collections import OrderedDict, defaultdict
 
@@ -623,20 +622,15 @@ def set_attributes_dict_on_layer(
             curve_name = pm.animLayer(
                 animation_layer, findCurveForPlug=node_attribute, query=True
             )
-            if not curve_name:
-                d = attr_data.get("keys")
-                logger.debug(f"{attr_name}: {d}")
+            if curve_name:
+                curve = pm.PyNode(curve_name[0])
+                set_key_data(
+                    curve, attr_data.get("keys"), animation_layer=animation_layer
+                )
+            else:
                 set_key_data(
                     node_attribute, attr_data.get("keys"), animation_layer=animation_layer
                 )
-                curve_name = pm.animLayer(
-                    animation_layer, findCurveForPlug=node_attribute, query=True
-                )
-            curve = pm.PyNode(curve_name[0])
-
-            set_key_data(
-                curve, attr_data.get("keys"), animation_layer=animation_layer
-            )
 
 
 def get_attribute_dict_from_layer(
