@@ -1,0 +1,26 @@
+# Testing job using pytest running on mayapy
+
+name: Pytest-maya2024
+
+on:
+  push:
+    branches: [ "development" ]
+  pull_request:
+    branches: [ "development" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: mortenbohne/maya:2024
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install requirements
+        run: |
+          mayapy -m pip install -r requirements.txt
+
+      - name: Run pytest
+        run: mayapy -m pytest -m "not skip_on_ci" tests/
