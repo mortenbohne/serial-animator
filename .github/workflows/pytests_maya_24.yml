@@ -1,5 +1,3 @@
-# Testing job using pytest running on mayapy
-
 name: Pytest-maya2024
 
 on:
@@ -12,8 +10,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/mortenbohne/maya-docker:maya2024
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -24,6 +20,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
+
+      - name: Pull Docker image
+        run: docker pull ghcr.io/mortenbohne/maya-docker:maya2024
 
       - name: Install requirements
         run: |
