@@ -10,27 +10,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/lego/maya-docker/maya:2024
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.CR_PAT }}
+    - name: Install requirements
+      run: mayapy -m pip install -r requirements.txt
 
-      - name: Pull Docker image
-        run: docker pull ghcr.io/mortenbohne/maya-docker:maya2024
-
-      - name: Set up Docker container
-        run: docker run --rm -dit --name maya-container ghcr.io/mortenbohne/maya-docker:maya2024
-
-      - name: Install requirements
-        run: |
-          docker exec maya-container mayapy -m pip install -r requirements.txt
-
-      - name: Run pytest
-        run: |
-          docker exec maya-container mayapy -m pytest -m "not skip_on_ci" tests/
+    - name: Run pytest
+      run: mayapy -m pytest -m "not skip_on_ci" tests/
