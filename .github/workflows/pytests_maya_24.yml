@@ -1,0 +1,26 @@
+name: Pytest-maya2024
+
+on:
+  push:
+    branches: [ "development" ]
+  pull_request:
+    branches: [ "development" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/mortenbohne/maya-docker:maya2024
+      credentials:
+         username: ${{ github.repository_owner }}
+         password: ${{ secrets.CR_PAT }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install requirements
+      run: mayapy -m pip install -r requirements.txt
+
+    - name: Run pytest
+      run: mayapy -m pytest -m "not skip_on_ci" tests/
