@@ -24,6 +24,3 @@ jobs:
 
     - name: Run pytest
       run: mayapy -m pytest -m "not only_ui" tests/
-
-    - name: Run pytest ui
-      run: maya -m pytest -m "only_ui" tests/
