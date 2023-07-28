@@ -1,10 +1,7 @@
 name: Pytest-maya2024
 
 on:
-  push:
-    branches: [ "development" ]
-  pull_request:
-    branches: [ "development" ]
+  workflow_call:
   workflow_dispatch:
 
 jobs:
