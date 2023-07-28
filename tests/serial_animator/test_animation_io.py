@@ -108,7 +108,7 @@ def test_get_nodes(keyed_cube, cube):
 def test_save_animation_from_selection(tmp_path, preview_sequence, keyed_cube):
     out_path = tmp_path / "output.anim"
     pm.select(keyed_cube)
-    with animation_io.logger.all_loggers_context("WARNING"):
+    with animation_io.logger.all_log_levels("WARNING"):
         result = animation_io.save_animation_from_selection(out_path, preview_sequence)
     assert result.is_file()
 
