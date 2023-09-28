@@ -52,8 +52,8 @@ class CustomAttributeData:
 @dataclass
 class NodeData:
     name: str
-    attributes: list[AttributeData] = field(default_factory=list)
     node_type: str
+    attributes: list[AttributeData] = field(default_factory=list)
 
     @classmethod
     def from_pynode(cls, node: pm.nt.DependNode):
@@ -61,8 +61,8 @@ class NodeData:
         attributes = [AttributeData.from_pynode(attribute) for attribute in cls.get_attributes(node)]
         return cls(
             name=name,
-            attributes=attributes,
-            node_type=node.nodeType()
+            node_type=node.nodeType(),
+            attributes=attributes
         )
 
     @classmethod
