@@ -150,17 +150,15 @@ def is_interactive() -> bool:
     return True
 
 
-def reload_serial_animator():
+def reload():
     """
     Workaround to reload entire serial-animator library.
     Removes serial_animator modules from 'sys.modules' and imports it again
     """
-    import sys
+
     import serial_animator
 
-    src_folder = Path(serial_animator.__file__).parents[1]
-    if src_folder not in sys.path:
-        sys.path.append(str(src_folder.resolve()))
-    for m in [p for p in sys.modules if p.startswith("serial_animator")]:
+    serial_animator = Path(serial_animator.__file__)
+    for m in [p for p in sys.modules if p.startswith(serial_animator.parent.name)]:
         sys.modules.pop(m)
-    import serial_animator
+    import serial_animator  # noqa
