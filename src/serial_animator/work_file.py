@@ -4,11 +4,16 @@
 import pymel.core as pm
 import serial_animator.animation_io as aio
 
+from serial_animator.log import log
+
+logger = log(__name__)
+
 DATA = None
 
 
 def create_test_scene_with_data():
-    pm.newFile(force=True)
+    with logger.silence():
+        pm.newFile(force=True)
     cube = pm.polyCube(constructionHistory=False)[0]
     cube2 = pm.polyCube(constructionHistory=False)[0]
     pm.setKeyframe(cube2, value=0, time=0, attribute="translateX")
