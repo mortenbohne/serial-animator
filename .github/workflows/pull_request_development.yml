@@ -1,0 +1,14 @@
+# Workflow for any PR
+
+name: Pull Request - development
+on:
+  pull_request:
+    branches: [ "develop" ]
+
+jobs:
+  call-black-workflow:
+    uses: ./.github/workflows/black.yml
+  call-pytest-workflow:
+    uses: ./.github/workflows/pytests_maya_24.yml
+  call-pylint-workflow:
+    uses: ./.github/workflows/pylint.yml

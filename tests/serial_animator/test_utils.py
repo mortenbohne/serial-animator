@@ -49,9 +49,7 @@ def test_context_decorator():
         pass
 
 
-@pytest.mark.skipif(
-    utils.is_interactive() is False, reason="ScriptJobs only works in interactive mode"
-)
+@pytest.mark.only_ui
 def test_setup_scene_opened_callback(caplog):
     pm.newFile(force=True)
     callback_id = utils.setup_scene_opened_callback(log_warning_test, parent=None)

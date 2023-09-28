@@ -6,7 +6,7 @@ import logging
 
 import serial_animator.log
 
-_logger = serial_animator.log.log(__name__)
+logger = serial_animator.log.log(__name__)
 
 
 def test_search_nodes(namespaced_cube, cube, caplog):
