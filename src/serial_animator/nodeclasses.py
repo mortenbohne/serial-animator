@@ -68,7 +68,7 @@ class NodeData:
     @classmethod
     def get_attributes(cls, node):
         interesting_attributes = cls.get_interesting_attributes(node)
-        return [AttributeData.from_pynode(attribute) for attribute in node.listAttr(string=interesting_attributes)]
+        return node.listAttr(string=interesting_attributes)
 
     @classmethod
     def get_interesting_attributes(cls, node) -> list[str]:
